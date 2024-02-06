@@ -39,7 +39,7 @@ def theme : Theme := { Theme.default with
 
 
 def demoSite : Site := site DemoSite.Front /
-  static "static" ← "examples/website/static_files"
+  static "static" ← "website/static_files"
   "about" DemoSite.About
   "blog" DemoSite.Blog with
     DemoSite.Blog.Conditionals
