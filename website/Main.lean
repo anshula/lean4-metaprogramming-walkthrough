@@ -1,5 +1,5 @@
 import Verso.Genre.Blog
-import DemoSite
+import Walkthrough
 
 open Verso Genre Blog Site Syntax
 
@@ -33,11 +33,12 @@ def theme : Theme := { Theme.default with
   |>.override #[] ⟨do return {{<div class="frontpage"><h1>{{← param "title"}}</h1> {{← param "content"}}</div>}}, id⟩
 
 -- with CSS and images
--- def demoSite : Site := site DemoSite.Blog / static "static" ← "website/static_files"  -- copy from static 'website/static_files' to '_out/walkthroughsite/static'
+-- def demoSite : Site := site Walkthrough.Blog / static "static" ← "website/static_files"  -- copy from static 'website/static_files' to '_out/walkthroughsite/static'
 
 /-- with links -/
-def demoSite : Site := site DemoSite.Blog with --/ static "static" ← "website/static_files"  -- copy from static 'website/static_files' to '_out/walkthroughsite/static'
-  DemoSite.Blog.Conditionals
-  DemoSite.Blog.FirstPost
+def demoSite : Site := site Walkthrough.Blog with --/ static "static" ← "website/static_files"  -- copy from static 'website/static_files' to '_out/walkthroughsite/static'
+  Walkthrough.Blog.Introduction
+  Walkthrough.Blog.FirstPost
+  Walkthrough.Blog.Conditionals
 
 def main := blogMain theme demoSite
