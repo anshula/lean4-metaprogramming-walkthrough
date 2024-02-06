@@ -6,10 +6,6 @@ open Verso Genre Blog Site Syntax
 open Output Html Template Theme in
 def theme : Theme := { Theme.default with
   primaryTemplate := do
-    let postList :=
-      match (← param? "posts") with
-      | none => Html.empty
-      | some html => {{ <h2> "Posts" </h2> }} ++ html
     return {{
       <html>
         <head>
@@ -28,7 +24,6 @@ def theme : Theme := { Theme.default with
           <div class="main" role="main">
             <div class="wrap">
               {{ (← param "content") }}
-              {{ postList }}
             </div>
           </div>
         </body>
@@ -38,13 +33,8 @@ def theme : Theme := { Theme.default with
   |>.override #[] ⟨do return {{<div class="frontpage"><h1>{{← param "title"}}</h1> {{← param "content"}}</div>}}, id⟩
 
 
-def demoSite : Site := site DemoSite.Front /
-  static "static" ← "website/static_files"
-  "about" DemoSite.About
-  "blog" DemoSite.Blog with
+def demoSite : Site := site DemoSite.Blog with
     DemoSite.Blog.Conditionals
     DemoSite.Blog.FirstPost
-
-
 
 def main := blogMain theme demoSite
