@@ -3,21 +3,14 @@
 
 
 
-This is a tutorial on metaprogramming, or equivalently, writing tactics to help prove math theorems, in Lean 4.
-That is, instead of focusing on writing a\_ formalized proof\_ (programming), we focus on writing a _program that writes a formalized proof_ (metaprogramming).
-
-## Code
-- Here is the [full code] containing everything in the tutorial.
-- Here is a short [”cheat sheet” containing helper functions ] you might find useful when metaprogramming in the future.
-
-## Looking Ahead
-
-By the end of the tutorial, you will have built a Lean tactic that takes an unnecessarily-weak theorem and turns it into a stronger theorem with an analogous proof (using an algorithm from the paper [ Generalization in Type Theory Based Proof Assistants] by Oliver Pons). 
-- For example, given the theorem that √2 is irrational….
-	theorem sqrt_two_irrational : 
+By the end of the tutorial, you will have built a Lean tactic that takes an unnecessarily-weak theorem and turns it into a stronger theorem with an analogous proof (using an algorithm from the paper [ Generalization in Type Theory Based Proof Assistants] by Oliver Pons).
+For example, given the theorem that √2 is irrational….
+```lean demo
+	theorem sqrt_two_irrational :
 	  Irrational (sqrt 2) := ...
+```
 	…this tactic will notice the proof never uses any properties of “2” besides that it is prime, and so it can generalize to the theorem that √p is irrational when p is prime.
-	theorem sqrt_prime_irrational : 
+	theorem sqrt_prime_irrational :
 	  ∀ (p : ℕ), Nat.Prime p → Irrational (sqrt p) := ...
 
 
@@ -39,6 +32,88 @@ Make sure you have:
 
 - Restarted Lean with `VSCode > Command-Shift-P > Lean Restart`
 
+
+```leanInit demo
+-- This block initializes a Lean context
+```
+
+
+```lean demo
+example := if true then 1 else 2
+example := if True then 1 else 2
+example : Int := if True then 1 else 2
+```
+
+```lean demo
+/-- A recursive function -/
+def slowId : Nat → Nat
+  | 0 => 0
+  | n + 1 => slowId n + 1
+
+#eval slowId 5
+
+/-- An array literal -/
+example := #[1, 2, 3]
+
+example := 33
+```
+
+I can also prove things about conditionals!
+```lean demo
+theorem lt_4 (b : Bool) : (if b then 1 else 2) < 4 := by
+  split
+  . skip; decide
+  . decide
+```
+
+It's also nice to write normal proofs sometimes.
+
+```lean demo
+def rev : List α → List α
+  | [] => []
+  | x :: xs => rev xs ++ [x]
+
+def revAcc (acc : List α) : List α → List α
+  | [] => acc
+  | x :: xs => revAcc (x :: acc) xs
+
+theorem rev_append_eq_revAcc (acc xs : List α) :
+    rev xs ++ acc = revAcc acc xs := by
+  induction xs generalizing acc with
+  | nil => simp [rev, revAcc]
+  | cons x xs ih =>
+    unfold rev
+    unfold revAcc
+    rw [List.append_assoc]
+    apply ih
+```
+
+Here are some uses of various constructors:
+```lean demo
+def squish (n : Option Nat) : Nat :=
+  match n with
+  | none => 0
+  | some k => .succ k
+
+def squish' (n : Option Nat) : Nat :=
+  match n with
+  | .none => 0
+  | .some k => k.succ
+
+open Nat in
+def squish'' (n : Option Nat) : Nat :=
+  match n with
+  | none => 0
+  | some k => succ k
+
+```
+
+
+Thank you for looking at my test/demo post.
+
+
+
+
 # Reading and Changing the Goal
 
 
@@ -46,7 +121,7 @@ Make sure you have:
 
 
 
-Here is a super simple tactic: the `do_nothing` tactic. 
+Here is a super simple tactic: the `do_nothing` tactic.
 import Lean
 open Lean Elab Tactic Meta Term
 
@@ -63,14 +138,14 @@ Here it is in action:
 
 ## Reading the context
 
-Now, let’s create a tactic `print_goal` that reads what the current goal is. 
+Now, let’s create a tactic `print_goal` that reads what the current goal is.
 elab "print_goal" : tactic => do
   let goal ← getMainGoal
   logInfo goal
 
 Let’s test the tactic:
 example : 1+1=2 := by
-  print_goal -- 1+1=2 
+  print_goal -- 1+1=2
   trivial
 
 And we get what we expect.
@@ -118,7 +193,7 @@ example : 1+1=2 := by
   print_goal_type_type -- Prop
   trivial
 
-Here’s the last example above in action:	
+Here’s the last example above in action:
 (img)
 
 Why do we use `getType` in the first case, and `inferType` in the second?
@@ -130,7 +205,7 @@ Why do we use `getType` in the first case, and `inferType` in the second?
 Now we can read the goal.  Let’s modify it.
 
 Let’s write a tactic that turns a theorem into its contrapositive.  First, let’s prove that a contrapositive tactic could work.
-theorem ctrp {P Q : Prop} : (¬ Q → ¬ P) → (P → Q) := by 
+theorem ctrp {P Q : Prop} : (¬ Q → ¬ P) → (P → Q) := by
   intros h p; by_contra nq; apply h nq p
 
 We can test it out.
@@ -154,7 +229,7 @@ That’s because there are a bunch of low-level configuration options you need t
 ### What does work
 
 So, instead, when we want to conglomerate existing Lean tactics, we use `macro`:
-macro "contrapos" : tactic => 
+macro "contrapos" : tactic =>
   `(tactic| apply ctrp)
 
 We can test it out.
@@ -180,7 +255,7 @@ To write “sorry” in a `macro`, you don’t have to remember it’s encoded i
 macro "my_sorry_macro" : tactic =>
   `(tactic| sorry)
 
-In general, `macro` lets you work at a higher level than `elab`, but you get less control. 
+In general, `macro` lets you work at a higher level than `elab`, but you get less control.
 
 As such, if your tactic doesn’t have any real programming logic, and is just conglomerating some existing tactics, as above, you should use `macro`.
 
@@ -204,7 +279,7 @@ macro "contrapos_with" h:ident : tactic => `(tactic|
 We can test it out.
 example {P Q : Prop} :  P → Q → True  := by
   intro p q
-  contrapos_with p 
+  contrapos_with p
 And it works as expected.
 (img)
 (img)
@@ -262,20 +337,20 @@ Some of them are not ones a human would think about when solving a theorem, that
 elab "print_hypotheses" : tactic => do
   for ldecl in ← getLCtx do
     if ldecl.isImplementationDetail then continue
-    let hyp_name := ldecl.userName 
-    let hyp_type := ldecl.type 
+    let hyp_name := ldecl.userName
+    let hyp_type := ldecl.type
     logInfo m!"Name: '{hyp_name}'  Type: '{hyp_type}' "
 
 We can test it out a theorem which has hypotheses that $$ and $$.
 example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
-  print_hypotheses 
+  print_hypotheses
 
 And we get all the relevant hypotheses.
 (img)
 
 ### What goes wrong
 
-Our tactic doesn’t seem to work when we add another hypothesis. 
+Our tactic doesn’t seem to work when we add another hypothesis.
 example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
   print_hypotheses -- prints h1 and h2
   have h3 : b-a = 1 := by {rw [h1, h2]}
@@ -357,7 +432,7 @@ def lookIntoEnvironment  : MetaM Unit := do
   dbg_trace (env.contains `riemannHypothesis)
 
 #eval lookIntoEnvironment
-… but fails if you use `TacticM`. 
+… but fails if you use `TacticM`.
 (img)
 
 What’s going on?
@@ -368,10 +443,10 @@ So, we ideally want to return something of type `TacticM` only when we really ne
 
 In summary, here are the perks of each:
 - `MetaM` lets you access most of the local context (including declared metavariables, therefore the name `MetaM`).
-- `TacticM` lets you access anything in `MetaM`, and also the current goals you have in the theorem the tactic is being used in.  
+- `TacticM` lets you access anything in `MetaM`, and also the current goals you have in the theorem the tactic is being used in.
 
 And here are the downsides:
-- We can’t use a `MetaM` function to peer into a goal — `MetaM` doesn’t allow us access to a list of goals. 
+- We can’t use a `MetaM` function to peer into a goal — `MetaM` doesn’t allow us access to a list of goals.
 - We can’t call a `TacticM` function from `#eval`.
 
 
@@ -408,7 +483,7 @@ elab "print_hypotheses_types" : tactic => do
 
 Now if we test it out…
 example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
-  print_hypotheses_types 
+  print_hypotheses_types
   simp [h1, h2]
 
 …we see that this tactic get us the relevant, human-readable information about hypotheses.
@@ -443,7 +518,7 @@ Finally, using the functions we made to read the goal and hypothesis, we are abl
 elab "assump" : tactic => do
   let goal_decl ← getGoalDecl
   for hyp_decl in ← getHypotheses do
-    if ← isDefEq hyp_decl.type goal_decl.type then 
+    if ← isDefEq hyp_decl.type goal_decl.type then
       closeMainGoal hyp_decl.toExpr
 
 We find our function closes the goal when the conclusion is in the hypothesis, and does nothing if not.  Just as expected!
@@ -472,17 +547,17 @@ elab "assump'" : tactic => do
 
   -- check if any of the hypotheses matches the goal.
   for hyp_decl in ← getHypotheses do
-    if ← isDefEq hyp_decl.type goal_decl.type then 
+    if ← isDefEq hyp_decl.type goal_decl.type then
       closeMainGoal hyp_decl.toExpr
       return
-  
+
   -- if no hypothesis matched, this tactic fails.
-  throwError "No matching assumptions."  
+  throwError "No matching assumptions."
 
 Now, if we test it out…
 example {P : Prop} (p : P): P := by
   assump' -- works
-	
+
 example {P : Prop} : P := by
   assump' -- throws error "No matching assumptions."
 …we get an error thrown if there are no matching assumptions.
@@ -503,11 +578,11 @@ elab "assump''" : tactic => do
     -- if it never does, we return none
     fun hyp_decl => return ← isDefEq hyp_decl.type goal_decl.type
   )
-  
+
    -- close the goal, or fail if no hypothesis matched
   match matching_hyp_decl with
   | some hyp_decl => closeMainGoal hyp_decl.toExpr
-  | none => throwError "No matching assumptions."   
+  | none => throwError "No matching assumptions."
 
 Note that this function requires the use of `(Option.)some` and `(Option.)none`.  This is because `findM?` must always return something of a consistent type. So it will sometimes return a hypothesis (wrapped in `Option.some`, if the hypothesis is found), and sometimes nothing (an an `Option.none`, if the hypothesis is not found).
 
@@ -530,7 +605,7 @@ elab "create_nat_goal" : tactic => do
   createGoal goalType
 
 example : 1 + 2 = 3 := by
-  create_nat_goal 
+  create_nat_goal
   simp; use 5
 (img)
 
@@ -561,7 +636,7 @@ elab "create_nat_hypothesis" : tactic => do
   createHypothesis hypType hypProof
 
 example : 1 + 2 = 3 := by
-  create_nat_hypothesis 
+  create_nat_hypothesis
   simp
 (img)
 
@@ -595,7 +670,7 @@ def createHypothesis (hypType : Expr) (hypProof : Expr) (hypName? : Option Name 
 It is a convention to use a `?` at the end of optional arguments, but it doesn’t actually have impact on the code parsing or execution.
 
 Now, we can see that if we specify we want the name of the new hypothesis to be `x`…
-elab "create_nat_hypothesis" : tactic => do 
+elab "create_nat_hypothesis" : tactic => do
   ...
   createHypothesis hypType hypProof `x
   ...
@@ -608,7 +683,7 @@ elab "create_nat_hypothesis" : tactic => do
 
 We know how to read and change the context in small ways.
 
-Now, to write _really_ powerful tactics in Lean, to really customize _how_ we change the context, we need to work with “expressions.” 
+Now, to write _really_ powerful tactics in Lean, to really customize _how_ we change the context, we need to work with “expressions.”
 
 
 ## Looking ahead
@@ -617,9 +692,9 @@ By the end of the next few sections, we should be able to take in a mathematical
 
 And what’s the point of that?  It sets us up for the next section.
 
-By the end of the next section, we should be able to generalize a particular natural number subexpression in a statement (e.g $$) to an arbitrary constant of that type, and rewrite the statement accordingly (e.g. $$). 
+By the end of the next section, we should be able to generalize a particular natural number subexpression in a statement (e.g $$) to an arbitrary constant of that type, and rewrite the statement accordingly (e.g. $$).
 
- This will pave the way for our algorithm that automatically generalizes unnecessarily weak theorems (the big project of this course.) 
+ This will pave the way for our algorithm that automatically generalizes unnecessarily weak theorems (the big project of this course.)
 
 ## What are expressions?
 
@@ -753,7 +828,7 @@ Why did we have to include the `liftTermElabM` part above?  We get into that in 
 
 An error you’ll likely encounter a lot has the form: `Has type MonadA (...) but is expected to have type MonadB (...)`.
 
-For example, if we had tried to write the code above as 
+For example, if we had tried to write the code above as
 elab "#term_to_expr" t:term : command => do
   let e ← Term.elabTerm t none
   logInfo m!"The expression corresponding to {t} is:\n\n{repr e}"
@@ -878,7 +953,7 @@ def isNatDebug (e: Expr): MetaM Unit := do
   let type_expr ← inferType e
   dbg_trace "The type expression is: {type_expr}"
 
-#eval isNatDebug zero 
+#eval isNatDebug zero
 
 Unfortunately, what the above prints out is that `type_expr` is a `Nat`.(img)
 
@@ -890,7 +965,7 @@ def isNatDebugRepr (e: Expr): MetaM Unit := do
   let type_expr ← inferType e
   dbg_trace "The type expression is: {repr type_expr}"
 
-#eval isNatDebugRepr zero 
+#eval isNatDebugRepr zero
 
 Now, we get what we want — that `type_expr` looks like `Lean.Expr.const `Nat []`
 (img)
@@ -908,7 +983,7 @@ def sayHello : MetaM Unit := do
 (img)
 
 But if it’s used within a tactic, which is used within a proof…
-elab "sayHello" : tactic => sayHello 
+elab "sayHello" : tactic => sayHello
 
 example : True := by
   sayHello -- outputs "hi"
@@ -919,7 +994,7 @@ example : True := by
 
 # Fixing printing errors
 
-If you need to print a list or something, you might get an error that lean was expecting something of type `MessageData` but instead got a `List`. 
+If you need to print a list or something, you might get an error that lean was expecting something of type `MessageData` but instead got a `List`.
 logInfo freeIdents -- throws error
 
  You can fix this by using `toString`.
@@ -1002,7 +1077,7 @@ Let’s create a tactic that, given a goal, gives you a Lean expression.  You ca
 
 elab "print_goal_as_expression" : tactic => do
   let goal ← getGoalType
-  logInfo (toExpr goal) 
+  logInfo (toExpr goal)
 
 Indeed, this prints the long `Expr` you’d expect.
 (img)
@@ -1011,7 +1086,7 @@ Technically:
 - `toExpr` returns an `Expr` object…
 - `repr` returns a `Format` object.
 
-They are slightly different… 
+They are slightly different…
 
 (tbl)
 
@@ -1030,7 +1105,7 @@ def getTheoremStatement (n : Name) : MetaM Expr := do
   let some thm := (← getEnv).find? n | failure -- get the declaration with that name
   return thm.type -- return the theorem statement
 
-#eval getTheoremStatement `multPermute 
+#eval getTheoremStatement `multPermute
 
 We get this long expression.
 (img)
@@ -1090,7 +1165,7 @@ def printNatsIn (e : Expr) : MetaM Unit :=
   e.forEachWhere isNat logExpression -- DOESN'T WORK
 …because `isNat` isn’t always guaranteed to take an expression to a boolean.  Rather than being of type `Expr → Bool`, it is of type `Expr → MetaM Bool`.  This is because type inference needs to be wrapped in a monad — it’s “not guaranteed to work.”
 
-Instead, we need a variant of `forEachWhere`that works to take monads as arguments.  This variant is called `forEach`, which takes a function of type `Expr → MetaM Bool`. 
+Instead, we need a variant of `forEachWhere`that works to take monads as arguments.  This variant is called `forEach`, which takes a function of type `Expr → MetaM Bool`.
 def printIfNat (subexpr : Expr) : MetaM Unit := do
   try
 	sorry --  FILL THIS IN
@@ -1124,18 +1199,18 @@ def printNatsIn (e : Expr) : MetaM Unit := do
 
 When we log which subexpression it gets stuck on, we find the code stops running once it reaches the subexpression that says `#2` (which, if we write out its full representation using `repr`, we find is short for `Lean.Expr.bvar 2`, or bound variable #2).
 (img)
-That is, `isNat`’s type inference doesn’t work on this, and so it fails, and so it causes our whole program to fail. 
+That is, `isNat`’s type inference doesn’t work on this, and so it fails, and so it causes our whole program to fail.
 
 Ideally, we want `isNat` to silently fail when the subexpression isn’t well-formed enough to perform type inference.  So, we want to encapsulate all of this in a “try-catch” clause.
 def printIfNat (subexpr : Expr) : MetaM Unit := do
   try
     let isNatResult ← isNat subexpr
-    if isNatResult 
+    if isNatResult
       then logPrettyExpression subexpr; dbg_trace "---"
       else return
   catch
   | Exception.error _ _ => return
-  | _ => throwError "Something about 'isNat subexpr' is throwing an error." 
+  | _ => throwError "Something about 'isNat subexpr' is throwing an error."
 
 def printNatsIn (e : Expr) : MetaM Unit := do
   e.forEach printIfNat
@@ -1151,7 +1226,7 @@ Indeed, we end up printing out all the natural numbers, besides the ones we forc
 So, above, when we asked Lean to identify all the natural numbers in…
 ∀ (n m p : ℕ), n * (m * p) = m * (n * p)
 …it identified…
-#2 * (#1 * #0)		-- n * (m * p) 
+#2 * (#1 * #0)		-- n * (m * p)
 #1 * #0			-- m * p
 #1 * (#2 * #0)		-- m * (n * p)
 #2 * #0			-- n * p
@@ -1175,7 +1250,7 @@ Now, let’s have the function _replace_ the term with the type of it (creating 
 That is, given this theorem…
 theorem flt_example : 2^4 % 5 = 1 := by rfl
 … we want to find all the natural numbers, and replace them with the type `Nat`.  We could do this with `generalize`.
-theorem flt_example' : 2^4 % 5 = 1 := by 
+theorem flt_example' : 2^4 % 5 = 1 := by
   generalize ha: 2 = a
   generalize hn: 5 = n
   generalize hm: 4 = m
@@ -1184,11 +1259,11 @@ Now our goal looks more general:
 (img)
 
 But now, we want to create a tactic `generalizeAllNats` that automates it — i.e. create a tactic that finds all the natural numbers in an expression and replaces them with the type `Nat`.  Here’s the scaffolding code:
-theorem flt_example' : 2^4 % 5 = 1 := by 
+theorem flt_example' : 2^4 % 5 = 1 := by
 	generalizeAllNats
 
 Why do this?  This is the first step in working towards generalizing this theorem to any theorem that looks like:
-theorem flt_general : (hp : Nat.Prime p) (hpn : IsCoprime a p) : 
+theorem flt_general : (hp : Nat.Prime p) (hpn : IsCoprime a p) :
 	a ^ (p - 1) % p = 1
 
 We’ll explore these in the next sections.
@@ -1284,7 +1359,7 @@ def getAtomicNatsIn (e : Expr) : MetaM (List Expr) := do
   return natSubexprs
 
 
-Hint: 
+Hint:
 - The expression for `1` (an atomic Nat) looks like this:
 	(img)
 
@@ -1383,7 +1458,7 @@ def generalizeTerm (e : Expr) (x? : Option Name := none) (h? : Option Name := no
   let (_, new_goal) ← (←getGoalVar).generalize (List.toArray [genArg])
   setGoals [new_goal]
 
-If you use `mkFreshUserName `x` then Lean will use `x` as the “base word” in defining the variable name, adding other symbols to make sure the name is unique. 
+If you use `mkFreshUserName `x` then Lean will use `x` as the “base word” in defining the variable name, adding other symbols to make sure the name is unique.
 (img)
 
 So for example now when you generalize something else, `mkFreshUserName` follows the same “base names”, but still ensures the names are unique.
@@ -1470,7 +1545,7 @@ elab "autogeneralize" h:ident : tactic =>
 
 example : True := by
   have multPermuteHyp := multPermute
-  autogeneralize multPermuteHyp 
+  autogeneralize multPermuteHyp
 # Accessing the proof of a hypothesis
 
 Suppose we create the hypothesis `h` using
@@ -1487,13 +1562,13 @@ def printProofOf (hypName : Name) : TacticM Unit := do
   logInfo ("Value of hypothesis? " ++ (toString hypValue))
   -- printing "hyp.value" in the line below causes a panic
   -- logInfo ("Value of hypothesis? " ++ hyp.value)
-  
+
 elab "printProofOf" h:ident : tactic =>
   printProofOf h.getId
 
 example : True := by
   have h : 1+1 = 2 := by rfl
-  printProofOf h 
+  printProofOf h
 
 Changing the `have` to a `let` fixes the issue.
 
@@ -1515,7 +1590,7 @@ elab "printProofOf" h:ident : tactic =>
 
 example : True := by
   let h : 1+1 = 2 := by rfl
-  printProofOf h 
+  printProofOf h
 
 Note that the logic of `printProofOf` is the same.  So ultimately, we just use this function:
 def getHypothesisProof (h : Name) : TacticM Expr := do
@@ -1549,7 +1624,7 @@ example : 2*2=4 :=
 by
   generalize hm : @HMul.hMul Nat Nat Nat instHMul = f
 
-But inside a tactic, we aren’t allowed to access these high level tactics.  We have to call generalize like this: 
+But inside a tactic, we aren’t allowed to access these high level tactics.  We have to call generalize like this:
 generalizeTerm ...
 
 But…we want to go from that string `"@HMul.hMul Nat Nat Nat instHMul"` into an expression.
@@ -1653,7 +1728,7 @@ def getHypothesisProof (h : Name) : TacticM Expr := do
 	....
 	return ← liftOption val
 
-Here’s the full context: 
+Here’s the full context:
 def getHypothesisProof (h : Name) : TacticM Expr := do
   let hyp ← getHypothesisByName h
   if hyp.hasValue
@@ -1730,7 +1805,7 @@ def matchTheseGeneralized_Working (template : Expr) : Expr → String := fun e =
 #eval matchTheseGeneralized_Failing (.const `Nat []) (.const `Real [])  -- correctly saying they don't match
 
 
-Code [playground] here: 
+Code [playground] here:
 
 Anand says his guess is “that the template in the pattern match is treated as a new variable.”
 
@@ -1741,7 +1816,7 @@ That’s because usually in this syntax, it’s a new variable…letting you ret
     | original => some original
 # Puzzle — replacing parts of expressions
 
-Using that replacement function, replace all instances of 
+Using that replacement function, replace all instances of
 
 This is our hardcoded replacement function, which replaces the specific multiplication `*` operator  with the more general `f` operator.
 def replacementRule' : Expr → Option Expr
@@ -1770,7 +1845,7 @@ logInfo ("After: " ++ replaced)
 Now, generalize it.
 /-- Creating a replacementRule to replace "original" with "replacement" -/
 def replacementRule (original : Expr) (replacement: Expr) : Expr → Option Expr
-  
+
 	-- FILL THIS IN
 
 …so that `replacementRule f (mkConst fName)` gives us the same function.
@@ -1813,7 +1888,7 @@ elab "hypothesisPrinting" : tactic => do
 
 example : True := by
   let h : 1+1=2 := by simp
-  hypothesisPrinting 
+  hypothesisPrinting
   assumption
 
 Sometimes, you can’t get away with it.  Here, we can get and print the `fvarid` of a hypothesis without an error, but calling `getDecl` doesn’t work…
@@ -1879,7 +1954,7 @@ You get a type error.
 
 I think this is because the new type doesn’t match the proof term…but if you don’t include the proof term, it’s no issue?
 
-So now we need to have 
+So now we need to have
 - one hypothesis that has an associated term (that we can extract the proof from)
 - one hypothesis with no associated proof term (whose type we can generalize without errors)
 
@@ -2023,7 +2098,7 @@ For example here, I create a  false hypotheses that implies any binary operator 
 ∀ (f : ℕ → ℕ → ℕ) (n m p : ℕ), f n (f m p) = f m (f n p)
 …and a bogus proof for it…
 let genPropProof := toExpr 42
-…and then 
+…and then
 createHypothesis genPropType genPropProof `gen
 
 To create this…that gets accepted into the Lean context.
@@ -2046,8 +2121,8 @@ example : 1=2 := by
 
 # Bound variables
 
-The variable x in “for all x, …” or “there exists x, …” is a bound variable 
-- actually it’s just the ones that appear in the body…show image with for all x, x times 2 is even, the SECOND x is the bound variable 
+The variable x in “for all x, …” or “there exists x, …” is a bound variable
+- actually it’s just the ones that appear in the body…show image with for all x, x times 2 is even, the SECOND x is the bound variable
 - then show how this expression looks in lean, highlighting the bound variable part
 
 We want to update all references to “f” to be the lates bound variable
@@ -2102,14 +2177,14 @@ TAKEAWAY: retrieve the FvarId _just_ before you use it
   -- Then, prove those hypotheses are all you need.
   let genThmProof := toExpr 42
 
- 
+
 
   let l ← getAllHypotheses
   for h in l do
     logInfo (repr h.fvarId)
 
   -- update the FVarId of the generalized theorem
-  let genThmFVarId ← getHypothesisFVarId genThmName 
+  let genThmFVarId ← getHypothesisFVarId genThmName
 
 # An elaboration taking a hypothesis and a term
 
@@ -2177,7 +2252,7 @@ When you try isDefEq, Lean tries to assign the meta-variables to make it equal t
 
 # Error: Unexpected bound variable
 
-If we isDefEq comparing a bunch of subexpressions, we get this error. 
+If we isDefEq comparing a bunch of subexpressions, we get this error.
 
 The solution: — run `hasLooseBVars` to sanitize input — the expressions with loose bvars are not fully formed expressions
 
@@ -2207,7 +2282,7 @@ Modify the replacement rule so it replaces as long as original matches up to def
 Answer:
 def replaceIsDefEq (original : Expr) (replacement: Expr) : Expr → MetaM Expr := fun e => do
 
-\# 
+\#
 
 Right now have to write full HMUL stuff
 
@@ -2223,7 +2298,7 @@ And that’s because
 means
 fun x => x - 1
 
-So 
+So
 (.-.)
 means
 fun x y => x - y
@@ -2258,7 +2333,7 @@ Let’s start out with the default code (tagged `@[builtin_delab forallE]` if yo
 # Printing strings with objects
 
 `m!"stuff"` prints a MessageData
-`f!"stuff"` prints a Format 
+`f!"stuff"` prints a Format
 `s!"stuff"`prints a string
 
 
@@ -2376,7 +2451,7 @@ Both have similar methods…
 
 So why would you use a list?
 - lists are inductive type in lean…so you can reason about them…so if you have proof s… i
-- t’s easier to prove things about lists than 
+- t’s easier to prove things about lists than
 
 ## Switching between them
 - use `[1,2,3]` to make a list

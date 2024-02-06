@@ -17,7 +17,7 @@ def theme : Theme := { Theme.default with
         <body>
           <header>
             <div class="inner-wrap">
-            <a class="logo" href="/"><img src="/static/logo.png"/></a>
+            <a class="logo" href="/">"Hands-on Lean 4 Tactic Writing"</a>
             {{ ← topNav }}
             </div>
           </header>
