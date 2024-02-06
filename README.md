@@ -11,7 +11,7 @@ To run that executable, run:
 lake exe walkthrough --output _out/walkthroughsite
 ```
 
-The correct html feels should be in `_out/examples/demosite` now.  To run the server for the website.
+The correct html files should be in `_out/examples/demosite` now.  To run the server for the website.
 ```haskell
 python3 -m http.server 8800 --directory _out/walkthroughsite
 ```

@@ -14,7 +14,7 @@ lean_lib Walkthrough where
 @[default_target]
 lean_exe walkthrough where
   srcDir := "website"
-  root := `DemoSiteMain
+  root := `Main
   -- Enables the use of the Lean interpreter by the executable (e.g.,
   -- `runFrontend`) at the expense of increased binary size on Linux.
   -- Remove this line if you do not need such functionality.
