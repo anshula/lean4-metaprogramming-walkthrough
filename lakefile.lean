@@ -4,20 +4,15 @@ open Lake DSL
 package «LeanMetaprogrammingWalkthrough» where
   -- add package configuration options here
 
-lean_lib «LeanMetaprogrammingWalkthrough» where
-  -- add library configuration options here
-
 require verso from git "https://github.com/leanprover/verso" @ "main"
-
 -- require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "master"
 
--- A demo site that shows how to generate websites with Verso
-lean_lib DemoSite where
+lean_lib Walkthrough where
   srcDir := "website"
-  roots := #[`DemoSite]
+  roots := #[`Walkthrough]
 
 @[default_target]
-lean_exe demosite where
+lean_exe walkthrough where
   srcDir := "website"
   root := `DemoSiteMain
   -- Enables the use of the Lean interpreter by the executable (e.g.,
