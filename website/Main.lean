@@ -32,9 +32,12 @@ def theme : Theme := { Theme.default with
   }
   |>.override #[] ⟨do return {{<div class="frontpage"><h1>{{← param "title"}}</h1> {{← param "content"}}</div>}}, id⟩
 
+-- with CSS and images
+-- def demoSite : Site := site DemoSite.Blog / static "static" ← "website/static_files"  -- copy from static 'website/static_files' to '_out/walkthroughsite/static'
 
-def demoSite : Site := site DemoSite.Blog with
-    DemoSite.Blog.Conditionals
-    DemoSite.Blog.FirstPost
+/-- with links -/
+def demoSite : Site := site DemoSite.Blog with --/ static "static" ← "website/static_files"  -- copy from static 'website/static_files' to '_out/walkthroughsite/static'
+  DemoSite.Blog.Conditionals
+  DemoSite.Blog.FirstPost
 
 def main := blogMain theme demoSite
