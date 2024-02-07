@@ -18,10 +18,14 @@ By the end of the tutorial, you will have built an "auto-generalization" Lean ta
 -- This block initializes a Lean context
 ```
 
-For example, given the theorem that √2 is irrational….
 ```lean demo
 def sqrt : Nat → Nat := sorry
 def Irrational : Nat → Prop := sorry
+def Nat.Prime : Nat → Prop := sorry
+```
+
+For example, given the theorem that √2 is irrational….
+```lean demo
 theorem sqrt_two_irrational :
     Irrational (sqrt 2) := sorry
 ```
@@ -29,7 +33,6 @@ theorem sqrt_two_irrational :
 …this tactic will notice the proof never uses any properties of “2” besides that it is prime, and so it can generalize to the theorem that √p is irrational when p is prime.
 
 ```lean demo
-def Nat.Prime : Nat → Prop := sorry
 theorem sqrt_prime_irrational :
     ∀ (p : Nat), Nat.Prime p → Irrational (sqrt p) := sorry
 ```

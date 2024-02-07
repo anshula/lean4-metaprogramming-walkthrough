@@ -11,7 +11,7 @@ def theme : Theme := { Theme.default with
       <html>
         <head>
           <meta charset="UTF-8"/>
-          <title>{{ (← param (α := String) "title") }} " — Verso "</title>
+          <title>{{ (← param (α := String) "title") }} " — Hands-on Lean 4 Tactic Writing"</title>
           {{← builtinHeader }}
           <link rel="stylesheet" href="/static/style.css"/>
         </head>
