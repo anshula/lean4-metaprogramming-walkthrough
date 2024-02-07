@@ -28,14 +28,14 @@ def Nat.Prime : Nat → Prop := sorry
 For example, given the theorem that √2 is irrational….
 ```lean demo
 theorem sqrt_two_irrational :
-    Irrational (sqrt 2) := sorry
+  Irrational (sqrt 2) := sorry
 ```
 
 …this tactic will notice the proof never uses any properties of “2” besides that it is prime, and so it can generalize to the theorem that √p is irrational when p is prime.
 
 ```lean demo
 theorem sqrt_prime_irrational :
-    ∀ (p : Nat), Nat.Prime p → Irrational (sqrt p) := sorry
+  ∀ (p : Nat), Nat.Prime p → Irrational (sqrt p) := sorry
 ```
 
 # Pre-requisites

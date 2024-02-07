@@ -214,3 +214,14 @@ Make it display ok on a phone
 		font-size: 140%;
 	}
 } */
+
+/*******************************************
+Print code on nice background
+********************************************/
+
+section > pre {
+	font-family: monospace;
+	background-color: #e3d1da;
+	padding: 25px 0px 0px 25px;
+	margin: 10px;
+}
