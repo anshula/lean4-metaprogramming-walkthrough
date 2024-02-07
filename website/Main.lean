@@ -6,13 +6,14 @@ open Verso Genre Blog Site Syntax
 open Output Html Template Theme in
 def theme : Theme := { Theme.default with
   primaryTemplate := do
+
     return {{
       <html>
         <head>
           <meta charset="UTF-8"/>
           <title>{{ (← param (α := String) "title") }} " — Verso "</title>
-          <link rel="stylesheet" href="/static/style.css"/>
           {{← builtinHeader }}
+          <link rel="stylesheet" href="/static/style.css"/>
         </head>
         <body>
           <header>
