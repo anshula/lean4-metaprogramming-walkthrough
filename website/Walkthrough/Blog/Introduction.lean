@@ -15,10 +15,10 @@ That is, instead of focusing on writing a _formalized proof_ (programming), we f
 By the end of the tutorial, you will have built an "auto-generalization" Lean tactic that takes an unnecessarily-weak theorem and turns it into a stronger theorem with an analogous proof (using an algorithm from the paper [Generalization in Type Theory Based Proof Assistants](http://cedric.cnam.fr/~pons/PAPERS/types00.pdf) by Oliver Pons).
 
 ```leanInit demo
--- This block initializes a Lean context
+
 ```
 
-```lean demo
+```lean demo show:=false
 def sqrt : Nat → Nat := sorry
 def Irrational : Nat → Prop := sorry
 def Nat.Prime : Nat → Prop := sorry
