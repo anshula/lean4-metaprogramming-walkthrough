@@ -74,6 +74,15 @@ Define and link to fonts
     font-weight: bold;
     font-style: italic;
 }
+
+@font-face {
+    font-family: 'Quicksandx';
+    src: url('fonts/quicksand-semibold.woff2') format('woff2'),
+		url('fonts/quicksand-semibold.woff') format('woff');
+    font-weight: semibold;
+    font-style: normal;
+}
+
 /*******************************************
 Change font and text style
 ********************************************/
@@ -143,10 +152,8 @@ h2 {
 }
 
 h3 {
-	font-weight:    normal;
-	text-transform: uppercase;
+	font-weight: 	semibold;
 	font-size:      150%;
-	letter-spacing: 0.15em;
 	margin:         1.75em 0 0.75em;
 }
 
@@ -257,6 +264,19 @@ section > pre {
 }
 
 /*******************************************
+Print inline-code on nice background
+********************************************/
+
+
+code {
+	font-family: monospace;
+	background-color: #f2efeb;
+	padding: 5px;
+	border-radius: 5px;
+}
+
+
+/*******************************************
 Change color of lean warnings
 ********************************************/
 
@@ -273,7 +293,7 @@ Change color of lean warnings
     text-decoration-color: #f28444;
 }
 .hl.lean .has-info.warning .hover-info {
-    background-color: #f28444;
+    background-color: #e39364;
 }
 
 .hl.lean .has-info.info {
