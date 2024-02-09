@@ -44,7 +44,7 @@ def theme : Theme := { Theme.default with
 /-- with links -/
 def demoSite : Site := site Walkthrough.Blog with
   Walkthrough.Blog.Introduction
-  Walkthrough.Blog.FirstPost
-  Walkthrough.Blog.Conditionals
+  Walkthrough.Blog.ReadingAndChangingTheGoal
+
 
 def main := blogMain theme demoSite

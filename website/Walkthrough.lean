@@ -3,5 +3,4 @@
 
 import Walkthrough.Blog
 import Walkthrough.Blog.Introduction
-import Walkthrough.Blog.FirstPost
-import Walkthrough.Blog.Conditionals
+import Walkthrough.Blog.ReadingAndChangingTheGoal
