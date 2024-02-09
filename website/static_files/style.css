@@ -91,12 +91,16 @@ a:active {
 Styling headers
 ********************************************/
 
+h1, h2, h3, h4, h5, h6 {
+	text-align: left;
+}
+
 h1 {
 	font-size:   300%;
 	font-family: "OpenDyslexic3";
 	line-height: 1.2;
 	font-style:  normal;
-	margin:      2.5em 0 1em;
+	margin:      0 0 1em;
 }
 
 h2 {

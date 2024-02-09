@@ -10,9 +10,9 @@ That is, instead of focusing on writing a _formalized proof_ (programming), we f
 
 # Code
 - Here is the [full code](http://google.com) containing everything in the tutorial.
-- Here is a [short "cheet sheet"](http://google.com) containing helper functions you might find useful when metaprogramming in the future.
+- Here is a [short "cheat sheet"](http://google.com) containing helper functions you might find useful when metaprogramming in the future.
 
-# Looking Ahead
+# Looking Ahead to the Final Project
 
 By the end of the tutorial, you will have built an "auto-generalization" Lean tactic that takes an unnecessarily-weak theorem and turns it into a stronger theorem with an analogous proof (using an algorithm from the paper [Generalization in Type Theory Based Proof Assistants](http://cedric.cnam.fr/~pons/PAPERS/types00.pdf) by Oliver Pons).
 
@@ -39,7 +39,7 @@ theorem sqrt_prime_irrational :
 #eval 2
 ```
 
-# Pre-requisites
+# Recommended Background Knowledge
 
 Before starting this tutorial, it’s helpful (but not absolutely necessary) to know:
 - How to write theorems in a theorem-proving programming language (e.g. Coq, Isabelle, Lean, etc.).  If not, you can play the [Natural Number Game for Lean 4](https://adam.math.hhu.de/#/g/hhu-adam/NNG4).
@@ -51,7 +51,6 @@ Make sure you:
 - Download this project
 - Download mathlib with `VSCode > Command-Shift-P > Lean 4: Build Project`
 - Download the mathlib cache with `VSCode > Command-Shift-P > Lean 4: Fetch Mathlib Build Cache`
-
 - Restart Lean with `VSCode > Command-Shift-P > Lean Restart`
 
 Alternatively, you can use the [Lean web editor](https://live.lean-lang.org/) to work through this tutorial.
