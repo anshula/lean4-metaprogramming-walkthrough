@@ -36,15 +36,14 @@ theorem sqrt_two_irrational :
 ```lean demo
 theorem sqrt_prime_irrational :
   ∀ (p : Nat), Nat.Prime p → Irrational (sqrt p) := sorry
+#eval 2
 ```
 
 # Pre-requisites
 
 Before starting this tutorial, it’s helpful (but not absolutely necessary) to know:
-- How to write theorems in a theorem-proving programming language (e.g. Coq, Isabelle, Lean, etc.).  If not, you can play the [Natural Number Game (for Lean 4)](https://adam.math.hhu.de/#/g/hhu-adam/NNG4).
-- Basics about formalizing math (e.g. that types are propositions, and their terms are their proofs). If not, you can read some of the [Hitchiker’s Guide to Formal Verification (for Lean 4)](https://github.com/blanchette/logical_verification_2023/blob/main/hitchhikers_guide.pdf).
-
-- How to use monads to sidestep around the fact that functional programs shouldn’t have side effects.  [Metaprogramming Videos (for Lean 3)](https://www.youtube.com/watch?v=o6oUjcE6Nz4&list=PLlF-CfQhukNnq2kDCw2P_vI5AfXN7egP2)
+- How to write theorems in a theorem-proving programming language (e.g. Coq, Isabelle, Lean, etc.).  If not, you can play the [Natural Number Game for Lean 4](https://adam.math.hhu.de/#/g/hhu-adam/NNG4).
+- How to use monads to sidestep around the fact that functional programs shouldn’t have side effects.  If not, you can watch this short video playlist on [Metaprogramming in Lean 3](https://www.youtube.com/watch?v=o6oUjcE6Nz4&list=PLlF-CfQhukNnq2kDCw2P_vI5AfXN7egP2).
 
 # Setup
 

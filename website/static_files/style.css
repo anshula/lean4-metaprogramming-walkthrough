@@ -42,32 +42,6 @@ header, div.main {
 
 
 
-/*******************************************
-Hide author name and dates 
-********************************************/
-.metadata {
-	visibility: hidden;
-	height: 0
-}
-
-/*******************************************
-Make pop-up docstrings smaller
-********************************************/
-
-.hl.lean div.docstring {
-	width: 30em
-}
-
-/*******************************************
-Change color of lean warnings
-********************************************/
-
-.hl.lean .has-info.warning {
-    text-decoration-color: orange;
-}
-.hl.lean .has-info.warning .hover-info {
-    background-color: orange;
-}
 
 
 /*******************************************
@@ -216,12 +190,65 @@ Make it display ok on a phone
 } */
 
 /*******************************************
+Hide author name and dates 
+********************************************/
+.metadata {
+	visibility: hidden;
+	height: 0
+}
+
+/*******************************************
+Make pop-up docstrings smaller
+********************************************/
+
+.hl.lean div.docstring {
+	width: 30em
+}
+
+/* .hl.lean .hover-info{
+	width: 25em
+} */
+
+/*******************************************
 Print code on nice background
 ********************************************/
 
 section > pre {
 	font-family: monospace;
-	background-color: #e3d1da;
+	background-color: #f7eee1;
 	padding: 25px 0px 0px 25px;
 	margin: 10px;
+}
+
+/*******************************************
+Change color of lean warnings
+********************************************/
+
+/* error 	#bf4136 */
+
+.hl.lean .has-info.error {
+    text-decoration-color: #bf4136;
+}
+.hl.lean .has-info.error .hover-info {
+    background-color: #bf4136;
+}
+
+.hl.lean .has-info.warning {
+    text-decoration-color: #f28444;
+}
+.hl.lean .has-info.warning .hover-info {
+    background-color: #f28444;
+}
+
+.hl.lean .has-info.info {
+	text-decoration-color: #5d7ea8;
+}
+
+.hl.lean .has-info.info .hover-info {
+    background-color: #5d7ea8;
+	color: white
+}
+
+.hl.lean .token .hover-info {
+	background-color: #d6cec3
 }
