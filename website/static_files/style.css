@@ -7,7 +7,7 @@
 */
 
 html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+h1, h2, h3, h4, h5, h6, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
 del, dfn, img, ins, kbd, q, s, samp,
 small, strike, strong, sub, sup, tt, var, u, i, center,
@@ -75,13 +75,13 @@ Define and link to fonts
     font-style: italic;
 }
 
-@font-face {
+/* @font-face {
     font-family: 'Quicksandx';
     src: url('fonts/quicksand-semibold.woff2') format('woff2'),
 		url('fonts/quicksand-semibold.woff') format('woff');
-    font-weight: semibold;
+    font-weight: 600;
     font-style: normal;
-}
+} */
 
 /*******************************************
 Change font and text style
@@ -152,14 +152,14 @@ h2 {
 }
 
 h3 {
-	font-weight: 	semibold;
-	font-size:      150%;
+	font-weight: 	bold;
+	font-size:      125%;
 	margin:         1.75em 0 0.75em;
 }
 
 h4 {
 	font-weight:    normal;
-	font-size:      150%;
+	font-size:      125%;
 	letter-spacing: 0.1em;
 	margin:         1.5em 0 0.75em;
 }
@@ -167,7 +167,7 @@ h4 {
 h5 {
 	font-weight: normal;
 	font-style:  italic;
-	font-size:   150%;
+	font-size:   125%;
 	margin:      1.5em 0 0.75em;
 }
 
