@@ -49,6 +49,14 @@ header, div.main {
 Define and link to fonts
 ********************************************/
 @font-face {
+    font-family: 'OpenDyslexic3';
+    src: url('fonts/opendyslexic3-regular.woff2') format('woff2'),
+        url('fonts/opendyslexic3-regular.woff') format('woff');
+    font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
     font-family: 'Quicksandx';
     src: url('fonts/quicksand-regular.woff2') format('woff2'),
         url('fonts/quicksand-regular.woff') format('woff');

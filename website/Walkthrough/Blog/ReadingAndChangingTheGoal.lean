@@ -32,8 +32,6 @@ example : True := by
 
 Please feel free to **paste in these bits of code into your editor**, creating one big Lean file as we go!
 
-Or, hover over the code blocks on this website to see
-
 
 # Reading the context
 
