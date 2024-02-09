@@ -74,5 +74,10 @@ But since the line `apply ctrp` is so cumbersome to write out, lets wrap it up i
 Now, we’ve been using `elab (name) : tactic => ...` to create tactics.
 But `elab` is not very convenient to use if we are just planning on conglomerating a bunch of already-existing Lean tactics.
 
+That is, the following code _doesn't_ work:
+```lean readingAndChangingTheGoal error:=true
+elab "contrapos" : tactic => do
+  apply ctrp -- throws error!
+```
 
 That’s because there are a bunch of low-level configuration options you need to send to `apply` if you’re going to call it from within a tactic, and that’s a bit of a pain.
