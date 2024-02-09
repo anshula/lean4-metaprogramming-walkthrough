@@ -1,11 +1,25 @@
 function buildNav() {
+    var navElements = getNavElements()
     wrapUpContent()
     addNavBarOpener()
-    populateNavBar()
+    populateNavBar(navElements)
     activateMenuButton()
     // $(".navbarcollapsebutton").click()
 }
 
+/*-------------------------------------------------------*/
+/*  Get and quickly remove nav elements      */
+/*-------------------------------------------------------*/
+
+function getNavElements() {
+    // get page names
+    var navElements =  document.querySelectorAll('nav.top a');
+     
+    // Clear default nav
+    $("header").html("")
+
+    return navElements
+}
 /*-------------------------------------------------------*/
 /*  Wrap up the existing content in a #content tag       */
 /*-------------------------------------------------------*/
@@ -59,10 +73,11 @@ function addNavBarOpener() {
 /* For dynamically building the navbar based on content */
 /*-------------------------------------------------------*/
 
-function populateNavBar() {
+function populateNavBar(navElements) {
 
-    // Find all nav elements in the content
-    var navElements = document.querySelectorAll('nav.top a');
+    
+
+   
 
     // Create and populate the sidebar with links to those elements
     var sidebar = document.getElementById('compactness');
@@ -79,8 +94,7 @@ function populateNavBar() {
     sidebar.innerHTML += sidebarContent;
 
 
-    // Clear default nav
-    $("header").empty()
+    
 }
 
 

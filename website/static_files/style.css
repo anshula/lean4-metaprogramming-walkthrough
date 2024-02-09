@@ -33,6 +33,10 @@ footer, header, hgroup, menu, nav, section {
     display: block;
 }
 
+header {
+	visibility: hidden;
+}
+
 header, div.main {
     margin-left: 4em;
     margin-right: 4em;
