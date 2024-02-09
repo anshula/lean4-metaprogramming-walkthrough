@@ -2,7 +2,7 @@ import Mathlib.Data.Real.Irrational
 import Verso.Genre.Blog
 open Verso Genre Blog
 
-#doc (Post) "Introduction" =>
+#doc (Page) "Introduction" =>
 
 This is a tutorial on metaprogramming, or equivalently, writing tactics to help prove math theorems, in Lean 4.
 

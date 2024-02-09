@@ -3,7 +3,7 @@ import Mathlib.Tactic
 open Verso Genre Blog
 
 
-#doc (Post) "Reading and Changing the Goal" =>
+#doc (Page) "Reading and Changing the Goal" =>
 
 # A first tactic
 
