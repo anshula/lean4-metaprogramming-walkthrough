@@ -2,7 +2,7 @@ function buildNav() {
     wrapUpContent()
     addNavBarOpener()
     populateNavBar()
-    // activateMenuButton()
+    activateMenuButton()
     // $(".navbarcollapsebutton").click()
 }
 
@@ -24,7 +24,9 @@ function addNavBarOpener() {
                <div id="notscrollable">
                   <div class="title">
                      <a href="#">
-                     Hands-on Lean 4 Tactic Writing
+                     Hands-on <br/>
+                     Tactic Writing <br/>
+                     in Lean 4
                      </a>
                   </div>
                    <div class="author">

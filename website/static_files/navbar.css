@@ -14,7 +14,6 @@
 }
  #navbarcontainer.collapsed {
      left:-350px;
-    /*margin-left: -300px;
     */
 }
  #navbar {
@@ -141,7 +140,7 @@
      
 }
  .navbarcollapsebutton.change {
-     left: 300px;
+     left: 350px;
 
 }
 

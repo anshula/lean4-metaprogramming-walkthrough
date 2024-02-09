@@ -8,10 +8,6 @@ This is a tutorial on metaprogramming, or equivalently, writing tactics to help 
 
 That is, instead of focusing on writing a _formalized proof_ (programming), we focus on writing a _program that writes a formalized proof_ (metaprogramming).
 
-# Code
-- Here is the [full code](http://google.com) containing everything in the tutorial.
-- Here is a [short "cheat sheet"](http://google.com) containing helper functions you might find useful when metaprogramming in the future.
-
 # Looking Ahead to the Final Project
 
 By the end of the tutorial, you will have built an "auto-generalization" Lean tactic that takes an unnecessarily-weak theorem and turns it into a stronger theorem with an analogous proof (using an algorithm from the paper [Generalization in Type Theory Based Proof Assistants](http://cedric.cnam.fr/~pons/PAPERS/types00.pdf) by Oliver Pons).
@@ -54,3 +50,7 @@ Make sure you:
 - Restart Lean with `VSCode > Command-Shift-P > Lean Restart`
 
 Alternatively, you can use the [Lean web editor](https://live.lean-lang.org/) to work through this tutorial.
+
+# Code
+- Here is the [full code](http://google.com) containing everything in the tutorial.
+- Here is a [short "cheat sheet"](http://google.com) containing helper functions you might find useful when metaprogramming in the future.
