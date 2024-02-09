@@ -9,7 +9,6 @@ open Verso Genre Blog
 ```leanInit readingAndChangingTheGoal
 ```
 
-
 Here is a super simple tactic: the `do_nothing` tactic.
 
 ```lean readingAndChangingTheGoal
@@ -69,7 +68,7 @@ example {P : Prop} : P → True := by
 But since the line `apply ctrp` is so cumbersome to write out, lets wrap it up into a one-word tactic called `contrapos`.
 
 
-## Writing a tactic --  what doesn’t work
+## Writing a tactic — what doesn’t work
 
 Now, we’ve been using `elab (name) : tactic => ...` to create tactics.
 But `elab` is not very convenient to use if we are just planning on conglomerating a bunch of already-existing Lean tactics.
@@ -81,3 +80,20 @@ elab "contrapos" : tactic => do
 ```
 
 That’s because there are a bunch of low-level configuration options you need to send to `apply` if you’re going to call it from within a tactic, and that’s a bit of a pain.
+
+##  Writing a tactic — what does work
+
+So, instead, when we want to conglomerate existing Lean tactics, we use ``macro``:
+```lean readingAndChangingTheGoal
+macro "contrapos" : tactic =>
+  `(tactic| apply ctrp)
+```
+
+We can test it out.
+```lean readingAndChangingTheGoal
+example : P → True := by
+  contrapos
+  simp
+```
+
+So that’s “elaboration” and “macros” — we can use either to write Lean tactics.
