@@ -60,9 +60,11 @@ Now we can read the goal.  Let’s modify it.
 
 Let’s write a tactic that turns a theorem into its contrapositive.  First, let’s prove that a contrapositive tactic could work.
 ```lean readingAndChangingTheGoal
-theorem ctrp {P Q : Prop} : (contra: ¬ Q → ¬ P) → (P → Q) := by
-  intro h
-  rwa [not_imp_not] at h
+theorem ctrp {P Q : Prop} :
+  (contra: ¬ Q → ¬ P) → (P → Q) :=
+  by
+    intro h
+    rwa [not_imp_not] at h
 ```
 
 Now, if we ever want to use this theorem, we can type `apply ctrp`.
@@ -105,7 +107,7 @@ example : P → True := by
 
 So that’s “elaboration” and “macros” — we can use either to write Lean tactics.
 
-# What's the difference: Macro vs Elab
+# Comparing `macro` and `elab`
 
 We noticed that `apply` works easily within a macro, but not within an elab.  It’s the same with lots of Lean tactics, for example, `sorry`.
 
