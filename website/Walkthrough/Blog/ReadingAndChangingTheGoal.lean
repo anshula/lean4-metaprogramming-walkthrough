@@ -23,15 +23,17 @@ elab "do_nothing" : tactic => do
   return
 ```
 
-Please feel free to **paste in these bits of code into your editor**, creating one big Lean file as we go!
-
-
-We’ll see that, indeed, this tactic changes nothing about the proof state (hover over the end-of-line bubbles to see the goal state):
+We’ll see that, indeed, this tactic changes nothing about the proof state.  **Hover over the end-of-line bubbles** to see the goal state.
 ```lean readingAndChangingTheGoal
 example : True := by
   do_nothing -- the goal here is still `True`
   trivial
 ```
+
+Please feel free to **paste in these bits of code into your editor**, creating one big Lean file as we go!
+
+Or, hover over the code blocks on this website to see
+
 
 # Reading the context
 
