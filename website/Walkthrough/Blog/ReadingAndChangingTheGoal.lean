@@ -155,7 +155,6 @@ example {P Q : Prop} : P → Q → True := by
   simp
 ```
 
-
 Let’s create a tactic that will contrapose the conclusion with the given hypothesis `h`.
 ```lean readingAndChangingTheGoal
 macro "contrapos_with" h:ident : tactic => `(tactic|
@@ -182,3 +181,70 @@ example {P Q : Prop} :  P → Q → True  := by
 ```
 
 And it works as expected.
+
+
+## Providing tactics as arguments to tactics
+
+So above, we provided an argument that was a proposition.
+
+We can also provide an argument that is another tactic.  For example, this example from the [Lean 4 Metaprogramming Book](https://github.com/leanprover-community/lean4-metaprogramming-book) takes two tactics, runs the first one (which potentially creates more goals), then runs the second one on all the goals.
+
+So without the tactic, you might have to do something like this:
+```lean readingAndChangingTheGoal
+example: 1=1 ∧ 2=2 := by
+  constructor -- split into two goals:  1 = 1 and 2 = 2
+  rfl; rfl  -- solve each one
+
+```
+
+But then you create this tactic…
+```lean readingAndChangingTheGoal
+macro "and_then" a:tactic b:tactic : tactic => `(tactic|
+  ($a:tactic; all_goals $b:tactic)
+)
+```
+
+…And you can do this:
+```lean readingAndChangingTheGoal
+example: 1=1 ∧ 2=2 := by
+  and_then constructor rfl
+```
+
+# Creating more intuitive syntax for tactics
+
+Instead of writing `and_then constructor rfl`, it might be more intuitive to write the above tactic as `constructor and_then rfl`.
+
+This is where it’s helpful to create a `syntax` rule.
+
+```lean readingAndChangingTheGoal
+syntax tactic " and_then " tactic : tactic
+macro_rules
+| `(tactic| $a:tactic and_then $b:tactic) =>
+    `(tactic| and_then $a $b)
+```
+
+Now we can write this tactic much more intuitively:
+```lean readingAndChangingTheGoal
+example: 1 = 1 ∧ 2 = 2 := by
+  constructor and_then rfl
+```
+
+
+
+# Another way to create more intuitive syntax for tactics
+
+We can avoid using `syntax` altogether in this particular case, and just declare the macro with the arguments fed in the appropriate places.
+
+```lean readingAndChangingTheGoal
+macro  a:tactic "and_then'" b:tactic : tactic => `(tactic|
+  ($a:tactic; all_goals $b:tactic)
+)
+```
+
+```lean readingAndChangingTheGoal
+example: 1 = 1 ∧ 2 = 2 := by
+  constructor and_then' rfl
+```
+
+
+This works just the same!
