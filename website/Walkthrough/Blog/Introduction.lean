@@ -1,4 +1,4 @@
---import Mathlib.Data.Real.Irrational
+import Mathlib.Data.Real.Irrational
 import Verso.Genre.Blog
 open Verso Genre Blog
 
@@ -15,24 +15,17 @@ By the end of the tutorial, you will have built an "auto-generalization" Lean ta
 ```leanInit demo
 ```
 
-```lean demo show:=false
-def sqrt : Nat → Nat := sorry
-def Irrational : Nat → Prop := sorry
-def Nat.Prime : Nat → Prop := sorry
-```
-
 For example, given the theorem that √2 is irrational….
 ```lean demo
 theorem sqrt_two_irrational :
-  Irrational (sqrt 2) := sorry
+  Irrational (Real.sqrt 2) := sorry
 ```
 
 …this tactic will notice the proof never uses any properties of “2” besides that it is prime, and so it can generalize to the theorem that √p is irrational when p is prime.
 
 ```lean demo
 theorem sqrt_prime_irrational :
-  ∀ (p : Nat), Nat.Prime p → Irrational (sqrt p) := sorry
-#eval 2
+  ∀ (p : Nat), Nat.Prime p → Irrational (Real.sqrt p) := sorry
 ```
 
 # Recommended Background Knowledge
