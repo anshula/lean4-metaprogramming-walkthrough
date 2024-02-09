@@ -41,16 +41,48 @@ header, div.main {
 
 
 
+/*******************************************
+Define and link to fonts
+********************************************/
+@font-face {
+    font-family: 'Quicksandx';
+    src: url('fonts/quicksand-regular.woff2') format('woff2'),
+        url('fonts/quicksand-regular.woff') format('woff');
+    font-weight: normal;
+	font-style: normal;
+}
 
+@font-face {
+    font-family: 'Quicksandx';
+    src: url('fonts/quicksand-regularitalic.woff2') format('woff2'),
+        url('fonts/quicksand-regularitalic.woff') format('woff');
+    font-weight: normal;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'Quicksandx';
+    src: url('fonts/quicksand-bold.woff2') format('woff2'),
+        url('fonts/quicksand-bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+}
 
-
+@font-face {
+    font-family: 'Quicksandx';
+    src: url('fonts/quicksand-bolditalic.woff2') format('woff2'),
+        url('fonts/quicksand-bolditalic.woff') format('woff');
+    font-weight: bold;
+    font-style: italic;
+}
 /*******************************************
 Change font and text style
 ********************************************/
+
+
 body {
 	text-align:  justify;
 	color:       #000;
-	font-family: "Quicksand";
+	font-family: "Quicksandx";
 	font-size:   120%;
 	line-height: 1.4;
 	margin:      0;
