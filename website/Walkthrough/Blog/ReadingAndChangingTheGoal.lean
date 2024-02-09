@@ -97,3 +97,77 @@ example : P → True := by
 ```
 
 So that’s “elaboration” and “macros” — we can use either to write Lean tactics.
+
+# Macro vs Elab
+
+We noticed that `apply` works easily within a macro, but not within an elab.  It’s the same with lots of Lean tactics, for example, `sorry`.
+
+To write `sorry` in an `elab`, you have to get a bit lower level, and use “admitGoal” and pass it an argument.
+```lean readingAndChangingTheGoal
+elab "my_sorry_elab" : tactic => do
+  let goal ← getMainGoal
+  admitGoal goal
+```
+
+To write `sorry` in a `macro`, you don’t have to remember it’s encoded internally as `Lean.Elab.admitGoal`.
+```lean readingAndChangingTheGoal
+macro "my_sorry_macro" : tactic =>
+  `(tactic| sorry)
+```
+
+In general, `macro` lets you work at a higher level than `elab`, but you get less control. 
+
+As such, if your tactic doesn’t have any real programming logic, and is just conglomerating some existing tactics, as above, you should use `macro`.
+
+If there’s a task at hand that requires some level of customization, you should use `elab`.
+
+# Providing arguments to tactics
+
+We can also provide arguments to a `macro` or `elab`.  Here’s an example where arguments come in handy.
+
+Say we have `P → Q → True`.
+
+It’s quick to contrapose `Q` and `True`:
+
+```lean readingAndChangingTheGoal
+example {P Q : Prop} : P → Q → True := by
+  intro p
+  contrapos -- `Q` and `True` have been contraposed
+  simp
+```
+
+But more annoying to contrapose `P` and `True`.
+
+```lean readingAndChangingTheGoal
+example {P Q : Prop} : P → Q → True := by
+  intro p q
+  revert p
+  contrapos -- `P` and `True` have been contraposed
+  simp
+```
+
+
+Let’s create a tactic that will contrapose the conclusion with the given hypothesis `h`.
+```lean readingAndChangingTheGoal
+macro "contrapos_with" h:ident : tactic => `(tactic|
+  (revert $h; contrapos; intros)
+)
+```
+We can test it out.
+
+```lean readingAndChangingTheGoal
+example {P Q : Prop} :  P → Q → True  := by
+  intro p q
+  contrapos_with q -- `Q` and `True` have been contraposed
+  simp_all
+```
+
+```lean readingAndChangingTheGoal
+example {P Q : Prop} :  P → Q → True  := by
+  intro p q
+  contrapos_with p -- `P` and `True` have been contraposed
+  simp_all
+```
+
+And it works as expected.
+
