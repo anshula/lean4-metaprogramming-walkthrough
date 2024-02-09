@@ -13,6 +13,7 @@ def theme : Theme := { Theme.default with
           <meta charset="UTF-8"/>
           <title>{{ (← param (α := String) "title") }} " — Hands-on Lean 4 Tactic Writing"</title>
           {{← builtinHeader }}
+          <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico"/>
           <link rel="stylesheet" href="/static/style.css"/>
           <link rel="stylesheet" href="/static/navbar.css"/>
           <link rel="stylesheet" href="/static/navbar-colors.css"/>
