@@ -30,7 +30,7 @@ function addNavBarOpener() {
                      </a>
                   </div>
                    <div class="author">
-                     by <a href="http://github.com/0art0" target="_blank">Anand</a> & <a href="http://anshula.com" target="_blank">Anshula</a>
+                     by <a href="http://anshula.com" target="_blank">Anshula</a> & <a href="http://github.com/0art0" target="_blank">Anand</a> 
                   </div>
                </div>
 

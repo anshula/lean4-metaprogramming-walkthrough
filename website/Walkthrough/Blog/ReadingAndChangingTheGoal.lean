@@ -2,11 +2,16 @@ import Verso.Genre.Blog
 import Mathlib.Tactic
 open Verso Genre Blog
 
+
 #doc (Post) "Reading and Changing the Goal" =>
 
 # A first tactic
 
 ```leanInit readingAndChangingTheGoal
+```
+
+```lean readingAndChangingTheGoal show:=false
+set_option linter.unusedVariables false
 ```
 
 Here is a super simple tactic: the `do_nothing` tactic.
@@ -47,13 +52,13 @@ example : 1+1=2 := by
 
 And we get what we expect.
 
-# Modify the context
+# Modifying the context
 
 Now we can read the goal.  Let’s modify it.
 
 Let’s write a tactic that turns a theorem into its contrapositive.  First, let’s prove that a contrapositive tactic could work.
 ```lean readingAndChangingTheGoal
-theorem ctrp {P Q : Prop} : (¬ Q → ¬ P) → (P → Q) := by
+theorem ctrp {P Q : Prop} : (contra: ¬ Q → ¬ P) → (P → Q) := by
   intro h
   rwa [not_imp_not] at h
 ```
@@ -98,7 +103,7 @@ example : P → True := by
 
 So that’s “elaboration” and “macros” — we can use either to write Lean tactics.
 
-# Macro vs Elab
+# What's the difference: Macro vs Elab
 
 We noticed that `apply` works easily within a macro, but not within an elab.  It’s the same with lots of Lean tactics, for example, `sorry`.
 
@@ -115,7 +120,7 @@ macro "my_sorry_macro" : tactic =>
   `(tactic| sorry)
 ```
 
-In general, `macro` lets you work at a higher level than `elab`, but you get less control. 
+In general, `macro` lets you work at a higher level than `elab`, but you get less control.
 
 As such, if your tactic doesn’t have any real programming logic, and is just conglomerating some existing tactics, as above, you should use `macro`.
 
@@ -150,7 +155,7 @@ example {P Q : Prop} : P → Q → True := by
 Let’s create a tactic that will contrapose the conclusion with the given hypothesis `h`.
 ```lean readingAndChangingTheGoal
 macro "contrapos_with" h:ident : tactic => `(tactic|
-  (revert $h; contrapos; intros)
+  (revert $h; contrapos)
 )
 ```
 We can test it out.
@@ -162,7 +167,10 @@ example {P Q : Prop} :  P → Q → True  := by
   simp_all
 ```
 
+
+
 ```lean readingAndChangingTheGoal
+
 example {P Q : Prop} :  P → Q → True  := by
   intro p q
   contrapos_with p -- `P` and `True` have been contraposed
@@ -170,4 +178,3 @@ example {P Q : Prop} :  P → Q → True  := by
 ```
 
 And it works as expected.
-
