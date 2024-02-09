@@ -2,11 +2,16 @@ import Verso.Genre.Blog
 import Mathlib.Tactic
 open Verso Genre Blog
 
+
 #doc (Post) "Reading and Changing the Goal" =>
 
 # A first tactic
 
 ```leanInit readingAndChangingTheGoal
+```
+
+```lean readingAndChangingTheGoal show:=false
+set_option linter.unusedVariables false
 ```
 
 Here is a super simple tactic: the `do_nothing` tactic.
@@ -162,7 +167,10 @@ example {P Q : Prop} :  P → Q → True  := by
   simp_all
 ```
 
+
+
 ```lean readingAndChangingTheGoal
+
 example {P Q : Prop} :  P → Q → True  := by
   intro p q
   contrapos_with p -- `P` and `True` have been contraposed
