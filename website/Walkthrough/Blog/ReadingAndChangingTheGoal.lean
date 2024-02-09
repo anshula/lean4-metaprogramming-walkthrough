@@ -12,7 +12,7 @@ open Verso Genre Blog
 Here is a super simple tactic: the `do_nothing` tactic.
 
 ```lean readingAndChangingTheGoal
-open Lean Meta Elab Tactic Term Command
+open Lean Elab Tactic
 
 elab "do_nothing" : tactic => do
   return
