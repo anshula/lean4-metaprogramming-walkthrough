@@ -30,7 +30,10 @@ example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
   constructor
   print_goals
   all_goals rfl
+
 ```
+
+#exit
 
 # Modifying the goals
 
@@ -38,7 +41,7 @@ The list of goals can also be modified with the `setGoals` command.
 
 Here is an implementation of a `rotate_goals` tactic that reorders the goals to push the main goal to the end.
 
-```AGH
+```lean AGH
 elab "rotate_goals" : tactic => do
   let goals ← getUnsolvedGoals
   setGoals goals.rotateLeft
@@ -103,7 +106,8 @@ elab "create_reflexivity_goal" : tactic => do
   createGoal goalType
 
 example : 1 + 2 = 3 := by
-  create_reflexivity_goal; swap
+  create_reflexivity_goal
+  rotate_goals
   simp; simp
 ```
 
@@ -212,3 +216,24 @@ example : 0=1 := by
   create_bogus_hypothesis
   assumption
 ```
+
+# Adding a library result as a hypothesis
+
+We've previously seen that it's possible to retrieve the statement and proof of a library theorem from the environment given its name.
+
+As an easy application of the tools we've developed so far, let's write a tactic that takes the name of a library result and adds it as a local hypothesis.
+
+```lean AGH
+elab "add_library_hypothesis" nm:name : tactic => do
+  let some thm := (← getEnv).find? nm.getName |
+    throwError s!"The result {nm} is not in the environment."
+  createHypothesisGuarded thm.type thm.value!
+
+example : 1 + 2 = 3 := by
+  add_library_hypothesis `Nat.add_comm
+  rfl
+```
+
+# Making progress on a proof state
+
+We typically
