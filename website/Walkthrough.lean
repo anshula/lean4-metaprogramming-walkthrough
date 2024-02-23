@@ -4,3 +4,4 @@
 import Walkthrough.Blog
 import Walkthrough.Blog.Introduction
 import Walkthrough.Blog.ReadingAndChangingTheGoal
+import Walkthrough.Blog.AddingGoalsAndHypotheses
