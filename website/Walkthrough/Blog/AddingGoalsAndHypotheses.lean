@@ -53,7 +53,7 @@ example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
 
 Now what happens if the user decides to use `setGoals` to just delete the list of active goals?
 
-``AGH error := true
+```lean AGH error := true
 elab "clear_goals" : tactic => do
   setGoals []
 
