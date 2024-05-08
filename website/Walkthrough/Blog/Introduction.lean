@@ -15,17 +15,17 @@ By the end of the tutorial, you will have built an "auto-generalization" Lean ta
 ```leanInit demo
 ```
 
-For example, given the theorem that √2 is irrational….
-```lean demo
+For example, given the theorem & proof that √2 is irrational….
+```
 theorem sqrt_two_irrational :
-  Irrational (Real.sqrt 2) := sorry
+  Irrational (Real.sqrt 2) := ...
 ```
 
 …this tactic will notice the proof never uses any properties of “2” besides that it is prime, and so it can generalize to the theorem that √p is irrational when p is prime.
 
-```lean demo
+```
 theorem sqrt_prime_irrational :
-  ∀ (p : Nat), Nat.Prime p → Irrational (Real.sqrt p) := sorry
+  ∀ (p : Nat), Nat.Prime p → Irrational (Real.sqrt p) := ...
 ```
 
 # Recommended Background Knowledge

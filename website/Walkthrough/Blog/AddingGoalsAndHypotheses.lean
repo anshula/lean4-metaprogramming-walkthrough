@@ -2,7 +2,7 @@ import Verso.Genre.Blog
 import Mathlib.Tactic
 open Verso Genre Blog
 
-#doc (Page) "Adding goals and hypotheses" =>
+#doc (Page) "Adding Goals and Hypotheses" =>
 
 ```leanInit AGH
 

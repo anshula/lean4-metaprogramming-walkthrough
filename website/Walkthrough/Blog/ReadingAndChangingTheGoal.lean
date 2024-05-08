@@ -107,7 +107,19 @@ So that’s “elaboration” and “macros” — we can use either to write Le
 
 # Comparing `macro` and `elab`
 
-We noticed that `apply` works easily within a macro, but not within an elab.  It’s the same with lots of Lean tactics, for example, `sorry`.
+We noticed that `apply` works easily within a `macro`, but not within an `elab`.  It’s the same with lots of Lean tactics, for example, `sorry`.
+
+To write `sorry` in a theorem, you just have to write `sorry`.
+```lean readingAndChangingTheGoal
+theorem my_sorry_theorem : True :=
+  sorry
+```
+
+To write `sorry` in a `macro`, you can easily access the "theorem-proving" mode with `tactic|`.
+```lean readingAndChangingTheGoal
+macro "my_sorry_macro" : tactic =>
+  `(tactic| sorry)
+```
 
 To write `sorry` in an `elab`, you have to get a bit lower level, and use “admitGoal” and pass it an argument.
 ```lean readingAndChangingTheGoal
@@ -116,11 +128,7 @@ elab "my_sorry_elab" : tactic => do
   admitGoal goal
 ```
 
-To write `sorry` in a `macro`, you don’t have to remember it’s encoded internally as `Lean.Elab.admitGoal`.
-```lean readingAndChangingTheGoal
-macro "my_sorry_macro" : tactic =>
-  `(tactic| sorry)
-```
+
 
 In general, `macro` lets you work at a higher level than `elab`, but you get less control.
 
@@ -183,9 +191,9 @@ And it works as expected.
 
 ## Providing tactics as arguments to tactics
 
-So above, we provided an argument that was a proposition.
+So above, we provided a proposition (technically, an identifier pointing to a proposition) as an argument.
 
-We can also provide an argument that is another tactic.  For example, this example from the [Lean 4 Metaprogramming Book](https://github.com/leanprover-community/lean4-metaprogramming-book) takes two tactics, runs the first one (which potentially creates more goals), then runs the second one on all the goals.
+We can also provide a tactic as an argument.  For example, this example from the [Lean 4 Metaprogramming Book](https://github.com/leanprover-community/lean4-metaprogramming-book) takes two tactics, runs the first one (which potentially creates more goals), then runs the second one on all the goals.
 
 So without the tactic, you might have to do something like this:
 ```lean readingAndChangingTheGoal
