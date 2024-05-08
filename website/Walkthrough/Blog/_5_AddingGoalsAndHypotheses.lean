@@ -5,7 +5,9 @@ open Verso Genre Blog
 #doc (Page) "Adding Goals and Hypotheses" =>
 
 ```leanInit AGH
+
 ```
+
 
 By the end of this section, you'll create a version of the `apply` tactic.  This tactic "applies" a lemma which has a conclusion that matches the current goal, and updates the current goal accordingly.
 
@@ -121,7 +123,6 @@ example : 1 + 2 = 3 := by
   create_goal (Nat.Prime 2)
   simp; exact Nat.prime_two
 ```
-
 
 
 # Adding a new hypothesis
@@ -286,20 +287,26 @@ Our rough strategy is going to be to:
 
 Here is what this strategy looks like translated into code (parts of this code are deliberately sub-optimal; we'll see ways of improving it shortly):
 
+
+```lean AGH show:=false
+def getHypothesisByFVarId (h : FVarId) : TacticM LocalDecl := withMainContext do
+  let goal ← getMainGoal  -- the dynamically generated hypotheses are associated with this particular goal
+  for ldecl in (← goal.getDecl).lctx do
+    if ldecl.isImplementationDetail then continue
+    if ldecl.fvarId == h then
+      return ldecl
+  throwError m!"No hypothesis with fvarId {h.name}."
+
+def getHypothesisByTerm (h : TSyntax `term) :  TacticM LocalDecl := withMainContext do
+  let fvarId ← getFVarId h
+  getHypothesisByFVarId fvarId
+```
+
 ```lean AGH
 elab "apply_hypothesis" h:term : tactic =>
 withMainContext do
-  -- read the local context
-  let lctx ← getLCtx
-
-  -- retrieve the variable for local hypothesis `h`
-  let fvarId ← getFVarId h
-
-  -- retrieve the declaration for `h` from the local context
-  let some hyp := lctx.find? fvarId |
-    throwError "Failed to find hypothesis in context."
-
   -- ensure that the hypothesis is an implication
+  let hyp ← getHypothesisByTerm h
   guard hyp.type.isArrow
 
   -- extract the implication's antecedent & consequent
@@ -313,7 +320,7 @@ withMainContext do
   -- create a new goal of type `P`
   let newGoal ← mkFreshExprMVar P
 
-  -- assign the value `h newGoal` to the current goal
+  -- close off the current goal with `h newGoal`
   (← getMainGoal).assign (.app hyp.toExpr newGoal)
 
   -- set `newGoal` as the main goal
@@ -338,17 +345,8 @@ The error goes away when we switch to the coarser notion of "definitional equali
 ```lean AGH
 elab "apply_hypothesis_defeq" h:term : tactic =>
 withMainContext do
-  -- read the local context
-  let lctx ← getLCtx
-
-  -- retrieve the variable for local hypothesis `h`
-  let fvarId ← getFVarId h
-
-  -- retrieve the declaration for `h` from the local context
-  let some hyp := lctx.find? fvarId |
-    throwError "Failed to find hypothesis in context."
-
-  -- ensure that the hypothesis is an implication
+    -- ensure that the hypothesis is an implication
+  let hyp ← getHypothesisByTerm h
   guard hyp.type.isArrow
 
   -- extract the implication's antecedent & consequent
@@ -395,15 +393,8 @@ With this approach, we no longer need to check if the hypothesis is an implicati
 ```lean AGH
 
 elab "apply_hypothesis_unif" h:term : tactic => withMainContext do
-  -- read the local context
-  let lctx ← getLCtx
-
-  -- retrieve the variable for local hypothesis `h`
-  let fvarId ← getFVarId h
-
-  -- retrieve the declaration for `h` from the local context
-  let some hyp := lctx.find? fvarId |
-    throwError "Failed to find hypothesis in context."
+  -- get the hypothesis
+  let hyp ← getHypothesisByTerm h
 
   -- try to unify hypothesis with `newTarget → currentTarget`
   let currentTarget ← getMainTarget
