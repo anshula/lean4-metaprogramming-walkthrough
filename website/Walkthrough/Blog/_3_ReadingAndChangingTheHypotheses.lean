@@ -70,7 +70,7 @@ So to get it, we need to modify our function to retrieve all hypotheses from the
 
 ```lean readingAndChangingTheHypotheses
 elab "print_hypotheses'" : tactic => do
-  let goal ← getMainGoal  -- the dynamically generated hypotheses are associated with this particular goal
+  let goal ← getMainGoal
   for ldecl in (← goal.getDecl).lctx do
     if ldecl.isImplementationDetail then continue
     let hyp_name := ldecl.userName
@@ -109,3 +109,38 @@ Why does this work?
 If you run `withMainContext`, then Lean gets the first goal (that is, the main metavariable), and adds in all of its context, and works with that.
 
 We did that manually earlier by calling `goal ← getMainGoal` and then  `(← goal.getDecl).lctx`.  But `withMainContext` adds in all the right stuff for us.
+
+# Extracting code out into a separate definition
+
+At this point, the tactics have gotten longer, and before we start adding onto this tactic in the next section, we might want to move out parts of the tactic into bits we can reuse in other tactics.
+
+We can do this as long as we move out the side-effect-causing tasks into a function wrapped into a monad, either `MetaM` or `TacticM`. (We’ll get into the differences between them later).
+
+```lean readingAndChangingTheHypotheses
+def printHypotheses : TacticM Unit := do
+  let goal ← getMainGoal  -- the dynamically generated hypotheses are associated with this particular goal
+  for ldecl in (← goal.getDecl).lctx do
+    if ldecl.isImplementationDetail then continue
+    let hypName := ldecl.userName
+    let hypType := ldecl.type
+    logInfo m!"Name: '{hypName}'  Type: '{hypType}'"
+```
+
+We can still call `print_hypotheses` as normal as long as we also create an `elab` that tells Lean which function to call when the user types `print_hypotheses`.
+```lean readingAndChangingTheHypotheses
+elab "print_hypotheses" : tactic => do
+  printHypotheses
+```
+
+
+# What to return?
+
+The function we used above looked like
+```
+def printHypotheses : TacticM Unit := do
+	...
+```
+
+In general, if we ever write a tactic that doesn’t return anything (and perhaps, just prints something to the screen), it will have the `Unit` return type.
+
+The `Unit` serves the purpose that `void` does in other programming languages — it tells us the function isn’t going to return anything interesting.
