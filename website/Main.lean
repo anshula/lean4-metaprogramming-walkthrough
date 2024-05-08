@@ -50,6 +50,8 @@ def demoSite : Site := site Walkthrough.Blog._1_Introduction /
   "Reading-and-Changing-the-Hypotheses" Walkthrough.Blog._3_ReadingAndChangingTheHypotheses
   "Comparing-Goals-and-Hypotheses" Walkthrough.Blog._4_ComparingGoalsAndHypotheses
   "Adding-Goals-and-Hypotheses" Walkthrough.Blog._5_AddingGoalsAndHypotheses
-
+  "Manipulating-Expressions" Walkthrough.Blog._6_ManipulatingExpressions
+  "Manipulating-Subexpressions" Walkthrough.Blog._7_ManipulatingSubexpressions
+  "Final-Project-Autogeneralize" Walkthrough.Blog._8_FinalProjectAutogeneralize
 
 def main := blogMain theme demoSite

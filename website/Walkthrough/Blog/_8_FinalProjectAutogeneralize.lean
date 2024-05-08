@@ -1,0 +1,7 @@
+import Verso.Genre.Blog
+import Mathlib.Tactic
+open Verso Genre Blog
+
+#doc (Page) "Final Project: The Autogeneralize Tactic" =>
+
+Coming soon.
