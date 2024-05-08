@@ -46,9 +46,9 @@ def theme : Theme := { Theme.default with
 def demoSite : Site := site Walkthrough.Blog._1_Introduction /
   static "static" ← "website/static_files"
   "Introduction" Walkthrough.Blog._1_Introduction
-  "Reading-and-Changing-the-Goal" Walkthrough.Blog.ReadingAndChangingTheGoal
-  "Reading-and-Changing-the-Hypotheses" Walkthrough.Blog.ReadingAndChangingTheHypotheses
-  "Adding-Goals-and-Hypotheses" Walkthrough.Blog.AddingGoalsAndHypotheses
+  "Reading-and-Changing-the-Goal" Walkthrough.Blog._2_ReadingAndChangingTheGoal
+  "Reading-and-Changing-the-Hypotheses" Walkthrough.Blog._3_ReadingAndChangingTheHypotheses
+  "Adding-Goals-and-Hypotheses" Walkthrough.Blog._4_AddingGoalsAndHypotheses
 
 
 def main := blogMain theme demoSite

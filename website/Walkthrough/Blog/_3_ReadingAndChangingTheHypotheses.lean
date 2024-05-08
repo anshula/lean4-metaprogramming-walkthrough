@@ -38,3 +38,25 @@ elab "print_hypotheses" : tactic => do
     let hyp_type := ldecl.type
     logInfo m!"Name: '{hyp_name}'  Type: '{hyp_type}' "
 ```
+
+We can test it out a theorem which has hypotheses that `a=2` and `b=3`.
+```lean readingAndChangingTheHypotheses
+example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
+  print_hypotheses
+  sorry
+```
+
+And we get all the relevant hypotheses.
+
+# What goes wrong: the context doesn't update
+
+Our tactic doesn’t seem to work when we add another hypothesis.
+```lean readingAndChangingTheHypotheses
+example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
+  print_hypotheses -- prints h1 and h2
+  have h3 : b-a = 1 := by {rw [h1, h2]}
+  print_hypotheses -- still prints only h1 and h2
+  sorry
+```
+
+ Our tactic doesn’t print the newest hypothesis.
