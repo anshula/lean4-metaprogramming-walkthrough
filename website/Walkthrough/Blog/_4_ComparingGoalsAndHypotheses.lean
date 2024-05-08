@@ -9,7 +9,6 @@ open Verso Genre Blog
 
 ```lean comparingGH show:=false
 set_option linter.unusedVariables false
-open Lean Elab Tactic Term
 ```
 
 By the end of this section, you will have built an `assumption` tactic that compares hypotheses of a theorem to its goal, and proves the theorem if any hypothesis exactly matches the goal.
@@ -95,7 +94,7 @@ Note that there were three “layers” we had to peel back to get to the releva
 The `getMainTarget` function conveniently performs this sequence of operations in one go.
 
 # Comparing hypotheses to the goal with an “assumption” tactic
-Finally, using the functions we made to read the goal and hypothesis, we are able to make an “assumption” tactic.
+Finally, using the functions we made to read the goal and hypothesis, we are able to make an `assumption` tactic (example taken from the [Lean 4 Metaprogramming Book](https://github.com/leanprover-community/lean4-metaprogramming-book)).
 
 ```lean comparingGH
 elab "assump" : tactic => do
@@ -155,3 +154,61 @@ Whenever there are metavariables (or "holes") in an expression, `isDefEq` tries 
 - If there's no way to fill in metavariables to make the expressions equal, it outputs fals.
 
 In this sense, `isDefEq` is a more generous, coarser notion of equality.
+
+
+# Throwing errors in the “assumption” tactic
+
+Currently, if there are no matching assumptions, the `assump` tactic silently fails, by not changing the proof state.
+
+We can make a more elaborate version of this tactic by having it throw an error if there are no matching assumptions.
+
+```lean comparingGH
+elab "assump'" : tactic => do
+  let goal_decl ← getGoalDecl
+
+  -- check if any of the hypotheses matches the goal.
+  for hyp_decl in ← getHypotheses do
+    if ← isDefEq hyp_decl.type goal_decl.type then
+      closeMainGoal hyp_decl.toExpr
+      return
+
+  -- if no hypothesis matched, this tactic fails.
+  throwError "No matching assumptions."
+```
+
+Now, if we test it out…
+```
+example {P : Prop} (p : P): P := by
+  assump' -- works
+
+example {P : Prop} : P := by
+  assump' -- throws error "No matching assumptions."
+```
+…we get an error thrown if there are no matching assumptions.
+
+
+
+# Rewriting the “assumption” tactic using `findM?`
+
+There’s already a function called `findM?` which implements the sort of thing we did — looping over a bunch of items and returning one when a property is true.
+
+```lean comparingGH
+elab "assump''" : tactic => do
+  let goal_decl ← getGoalDecl
+  let hyp_decls ← getHypotheses
+
+  -- check if any of the hypotheses matches the goal.
+  let matching_hyp_decl ← hyp_decls.findM? (
+    -- when isDefEq returns true, we return the successful hyp_decl
+    -- if it never does, we return none
+    fun hyp_decl =>
+      return ← isDefEq hyp_decl.type goal_decl.type
+  )
+
+   -- close the goal, or fail if no hypothesis matched
+  match matching_hyp_decl with
+  | some hyp_decl => closeMainGoal hyp_decl.toExpr
+  | none => throwError "No matching assumptions."
+```
+
+Note that this function requires the use of `(Option.)some` and `(Option.)none`.  This is because `findM?` must always return something of a consistent type. So it will sometimes return a hypothesis (wrapped in `Option.some`, if the hypothesis is found), and sometimes nothing (an an `Option.none`, if the hypothesis is not found).
