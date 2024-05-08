@@ -5,252 +5,36 @@ open Verso Genre Blog
 
 #doc (Page) "Reading and Changing the Hypotheses" =>
 
-# A first tactic
-
 ```leanInit readingAndChangingTheHypotheses
 ```
 
 ```lean readingAndChangingTheHypotheses show:=false
 set_option linter.unusedVariables false
-```
 
-Here is a super simple tactic: the `do_nothing` tactic.
-
-```lean readingAndChangingTheHypotheses
 open Lean Elab Tactic
 
-elab "do_nothing" : tactic => do
-  return
 ```
 
-We’ll see that, indeed, this tactic changes nothing about the proof state.  **Hover over the end-of-line bubbles** to see the goal state.
-```lean readingAndChangingTheHypotheses
-example : True := by
-  do_nothing -- the goal here is still `True`
-  trivial
-```
-
-Please feel free to **paste in these bits of code into your editor**, creating one big Lean file as we go!
-
-
-# Reading the context
-
-Now, let’s create a tactic `print_goal` that reads what the current goal is.
-```lean readingAndChangingTheHypotheses
-elab "print_goal" : tactic => do
-  let goal ← getMainGoal
-  logInfo goal
-```
-
-Let’s test the tactic:
-
-```lean readingAndChangingTheHypotheses
-example : 1+1=2 := by
-  print_goal -- 1+1=2
-  trivial
-```
-
-And we get what we expect.
-
-# Modifying the context
-
-Now we can read the goal.  Let’s modify it.
-
-Let’s write a tactic that turns a theorem into its contrapositive.  First, let’s prove that a contrapositive tactic could work.
-```lean readingAndChangingTheHypotheses
-theorem ctrp {P Q : Prop} :
-  (contra: ¬ Q → ¬ P) → (P → Q) :=
-  by
-    intro h
-    rwa [not_imp_not] at h
-```
-
-Now, if we ever want to use this theorem, we can type `apply ctrp`.
-```lean readingAndChangingTheHypotheses
-example {P : Prop} : P → True := by
-  apply ctrp
-  simp
-```
-
-But since the line `apply ctrp` is so cumbersome to write out, lets wrap it up into a one-word tactic called `contrapos`.
-
-
-## Writing a tactic — what doesn’t work
-
-Now, we’ve been using `elab (name) : tactic => ...` to create tactics.
-But `elab` is not very convenient to use if we are just planning on conglomerating a bunch of already-existing Lean tactics.
-
-That is, the following code _doesn't_ work:
-```lean readingAndChangingTheHypotheses error:=true
-elab "contrapos" : tactic => do
-  apply ctrp -- throws error!
-```
-
-That’s because there are a bunch of low-level configuration options you need to send to `apply` if you’re going to call it from within a tactic, and that’s a bit of a pain.
-
-##  Writing a tactic — what does work
-
-So, instead, when we want to conglomerate existing Lean tactics, we use ``macro``:
-```lean readingAndChangingTheHypotheses
-macro "contrapos" : tactic =>
-  `(tactic| apply ctrp)
-```
-
-We can test it out.
-```lean readingAndChangingTheHypotheses
-example : P → True := by
-  contrapos
-  simp
-```
-
-So that’s “elaboration” and “macros” — we can use either to write Lean tactics.
-
-# Comparing `macro` and `elab`
-
-We noticed that `apply` works easily within a `macro`, but not within an `elab`.  It’s the same with lots of Lean tactics, for example, `sorry`.
-
-To write `sorry` in a theorem, you just have to write `sorry`.
-```lean readingAndChangingTheHypotheses
-theorem my_sorry_theorem : True :=
-  sorry
-```
-
-To write `sorry` in a `macro`, you can easily access the "theorem-proving" mode with `tactic|`.
-```lean readingAndChangingTheHypotheses
-macro "my_sorry_macro" : tactic =>
-  `(tactic| sorry)
-```
-
-To write `sorry` in an `elab`, you have to get a bit lower level, and use “admitGoal” and pass it an argument.
-```lean readingAndChangingTheHypotheses
-elab "my_sorry_elab" : tactic => do
-  let goal ← getMainGoal
-  admitGoal goal
-```
+All of the exercises here are going to build up to writing an `assumption` tactic — one that looks at all the hypotheses, and if any matches the goal, successfully proves it using that hypothesis.
 
 
 
-In general, `macro` lets you work at a higher level than `elab`, but you get less control.
+# Reading the context — hypotheses
 
-As such, if your tactic doesn’t have any real programming logic, and is just conglomerating some existing tactics, as above, you should use `macro`.
+So now we can read and modify the _goal_ of a theorem.
 
-If there’s a task at hand that requires some level of customization, you should use `elab`.
+What about the _hypotheses_?
 
-# Providing arguments to tactics
+All the hypotheses are stored in the local context, which is retrieved through `getLCtx`.
 
-We can also provide arguments to a `macro` or `elab`.  Here’s an example where arguments come in handy.
-
-Say we have `P → Q → True`.
-
-It’s quick to contrapose `Q` and `True`:
-
-```lean readingAndChangingTheHypotheses
-example {P Q : Prop} : P → Q → True := by
-  intro p
-  contrapos -- `Q` and `True` have been contraposed
-  simp
-```
-
-But more annoying to contrapose `P` and `True`.
-
-```lean readingAndChangingTheHypotheses
-example {P Q : Prop} : P → Q → True := by
-  intro p q
-  revert p
-  contrapos -- `P` and `True` have been contraposed
-  simp
-```
-
-Let’s create a tactic that will contrapose the conclusion with the given hypothesis `h`.
-```lean readingAndChangingTheHypotheses
-macro "contrapos_with" h:ident : tactic => `(tactic|
-  (revert $h; contrapos)
-)
-```
-We can test it out.
-
-```lean readingAndChangingTheHypotheses
-example {P Q : Prop} :  P → Q → True  := by
-  intro p q
-  contrapos_with q -- `Q` and `True` have been contraposed
-  simp_all
-```
-
-
+Some of them are not ones a human would think about when solving a theorem, that is, they are “implementation details” (e.g. the name of the theorem itself) and we skip them.
 
 ```lean readingAndChangingTheHypotheses
 
-example {P Q : Prop} :  P → Q → True  := by
-  intro p q
-  contrapos_with p -- `P` and `True` have been contraposed
-  simp_all
+elab "print_hypotheses" : tactic => do
+  for ldecl in ← getLCtx do
+    if ldecl.isImplementationDetail then continue
+    let hyp_name := ldecl.userName
+    let hyp_type := ldecl.type
+    logInfo m!"Name: '{hyp_name}'  Type: '{hyp_type}' "
 ```
-
-And it works as expected.
-
-
-## Providing tactics as arguments to tactics
-
-So above, we provided a proposition (technically, an identifier pointing to a proposition) as an argument.
-
-We can also provide a tactic as an argument.  For example, this example from the [Lean 4 Metaprogramming Book](https://github.com/leanprover-community/lean4-metaprogramming-book) takes two tactics, runs the first one (which potentially creates more goals), then runs the second one on all the goals.
-
-So without the tactic, you might have to do something like this:
-```lean readingAndChangingTheHypotheses
-example: 1=1 ∧ 2=2 := by
-  constructor -- split into two goals:  1 = 1 and 2 = 2
-  rfl; rfl  -- solve each one
-
-```
-
-But then you create this tactic…
-```lean readingAndChangingTheHypotheses
-macro "and_then" a:tactic b:tactic : tactic => `(tactic|
-  ($a:tactic; all_goals $b:tactic)
-)
-```
-
-…And you can do this:
-```lean readingAndChangingTheHypotheses
-example: 1=1 ∧ 2=2 := by
-  and_then constructor rfl
-```
-
-# Creating more intuitive syntax for tactics
-
-Instead of writing `and_then constructor rfl`, it might be more intuitive to write the above tactic as `constructor and_then rfl`.
-
-This is where it’s helpful to create a `syntax` rule.
-
-```lean readingAndChangingTheHypotheses
-syntax tactic " and_then " tactic : tactic
-macro_rules
-| `(tactic| $a:tactic and_then $b:tactic) =>
-    `(tactic| and_then $a $b)
-```
-
-Now we can write this tactic much more intuitively:
-```lean readingAndChangingTheHypotheses
-example: 1 = 1 ∧ 2 = 2 := by
-  constructor and_then rfl
-```
-
-
-
-# Another way to create more intuitive syntax for tactics
-
-We can avoid using `syntax` altogether in this particular case, and just declare the macro with the arguments fed in the appropriate places.
-
-```lean readingAndChangingTheHypotheses
-macro  a:tactic "and_then'" b:tactic : tactic => `(tactic|
-  ($a:tactic; all_goals $b:tactic)
-)
-```
-
-```lean readingAndChangingTheHypotheses
-example: 1 = 1 ∧ 2 = 2 := by
-  constructor and_then' rfl
-```
-
-
-This works just the same!
