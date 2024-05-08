@@ -43,9 +43,9 @@ def theme : Theme := { Theme.default with
 -- def demoSite : Site := site Walkthrough.Blog / static "static" ← "website/static_files"  -- copy from static 'website/static_files' to '_out/walkthroughsite/static'
 
 /-- with links -/
-def demoSite : Site := site Walkthrough.Blog.Introduction /
+def demoSite : Site := site Walkthrough.Blog._1_Introduction /
   static "static" ← "website/static_files"
-  "Introduction" Walkthrough.Blog.Introduction
+  "Introduction" Walkthrough.Blog._1_Introduction
   "Reading-and-Changing-the-Goal" Walkthrough.Blog.ReadingAndChangingTheGoal
   "Reading-and-Changing-the-Hypotheses" Walkthrough.Blog.ReadingAndChangingTheHypotheses
   "Adding-Goals-and-Hypotheses" Walkthrough.Blog.AddingGoalsAndHypotheses
