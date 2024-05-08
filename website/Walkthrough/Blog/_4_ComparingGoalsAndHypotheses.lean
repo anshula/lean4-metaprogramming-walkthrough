@@ -177,7 +177,7 @@ elab "assump'" : tactic => do
 ```
 
 Now, if we test it out…
-```
+```lean comparingGH error:=true
 example {P : Prop} (p : P): P := by
   assump' -- works
 
@@ -199,7 +199,7 @@ elab "assump''" : tactic => do
 
   -- check if any of the hypotheses matches the goal.
   let matching_hyp_decl ← hyp_decls.findM? (
-    -- when isDefEq returns true, we return the successful hyp_decl
+    -- when isDefEq returns true, return the successful hyp_decl
     -- if it never does, we return none
     fun hyp_decl =>
       return ← isDefEq hyp_decl.type goal_decl.type

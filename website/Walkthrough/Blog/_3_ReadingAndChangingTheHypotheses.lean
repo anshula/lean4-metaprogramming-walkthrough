@@ -148,7 +148,7 @@ The `Unit` serves the purpose that `void` does in other programming languages �
 Our `printHypotheses` function worked when we had it return a `TacticM`.
 
 But if we change it to use `MetaM`, it fails.
-```
+```lean readingAndChangingTheHypotheses error:=true
 def printHypotheses' : MetaM Unit := do
   let goal ← getMainGoal
   for ldecl in (← goal.getDecl).lctx do
@@ -177,7 +177,7 @@ def lookIntoEnvironment  : MetaM Unit := do
 
 … but fails if you use `TacticM`.
 
-```
+```lean readingAndChangingTheHypotheses error:=true
 /-- Check the context for a theorem named `riemannHypothesis`. -/
 def lookIntoEnvironment'  : TacticM Unit := do
   let env ← getEnv
