@@ -13,7 +13,7 @@ set_option linter.unusedVariables false
 open Lean Elab Tactic
 ```
 
-All of the exercises in this section are going to build up to writing an `assumption` tactic — one that looks at all the hypotheses, and if any matches the goal, successfully proves it using that hypothesis.
+All of the exercises in this section and the next are going to build up to writing an `assumption` tactic — one that looks at all the hypotheses, and if any matches the goal, successfully proves it using that hypothesis.
 
 
 

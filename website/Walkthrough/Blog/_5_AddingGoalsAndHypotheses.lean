@@ -5,7 +5,6 @@ open Verso Genre Blog
 #doc (Page) "Adding Goals and Hypotheses" =>
 
 ```leanInit AGH
-
 ```
 
 By the end of this section, you'll create a version of the `apply` tactic.

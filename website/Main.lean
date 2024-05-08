@@ -48,7 +48,8 @@ def demoSite : Site := site Walkthrough.Blog._1_Introduction /
   "Introduction" Walkthrough.Blog._1_Introduction
   "Reading-and-Changing-the-Goal" Walkthrough.Blog._2_ReadingAndChangingTheGoal
   "Reading-and-Changing-the-Hypotheses" Walkthrough.Blog._3_ReadingAndChangingTheHypotheses
-  "Adding-Goals-and-Hypotheses" Walkthrough.Blog._4_AddingGoalsAndHypotheses
+  "Comparing-Goals-and-Hypotheses" Walkthrough.Blog._4_ComparingGoalsAndHypotheses
+  "Adding-Goals-and-Hypotheses" Walkthrough.Blog._5_AddingGoalsAndHypotheses
 
 
 def main := blogMain theme demoSite
