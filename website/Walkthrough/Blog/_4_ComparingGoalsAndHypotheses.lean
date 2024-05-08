@@ -9,7 +9,7 @@ open Verso Genre Blog
 
 ```lean comparingGH show:=false
 set_option linter.unusedVariables false
-open Lean Elab Tactic
+open Lean Elab Tactic Term
 ```
 
 By the end of this section, you will have built an `assumption` tactic that compares hypotheses of a theorem to its goal, and proves the theorem if any hypothesis exactly matches the goal.
@@ -122,3 +122,36 @@ In this example:
 - `hyp_decl.type` is the expression “P” (the proposition P.)
 
 In other words, we need to close the main goal with `hyp_decl.toExpr`  because we actually need the _term_ (the proof of P), rather than the _type_ (the proposition P).
+
+
+# Comparing `isDefEq` and `==`
+
+In the `assumption` tactic, why did we use `isDefEq` instead of `==`?  That is, we used:
+- `isDefEq hyp_decl.type goal_decl.type` instead of
+- `hyp_decl.type == goal_decl.type`
+
+
+Well sometimes two Lean expressions may seem the same to us...
+```lean comparingGH
+#eval Expr.const `Nat.zero []
+#eval toExpr 0
+```
+
+......but  `==` will say things aren't equal.
+
+```lean comparingGH
+#eval (toExpr 0) == (Expr.const `Nat.zero []) -- false
+```
+
+However, Lean `isDefEq` will be more reasonable.
+```lean comparingGH
+#eval isDefEq (toExpr 0) (Expr.const `Nat.zero []) -- true
+```
+
+What's going on?
+
+Whenever there are metavariables (or "holes") in an expression, `isDefEq` tries to fill in the holes in the way that makes the expressions equal.
+- If it can, it outputs `true`.
+- If there's no way to fill in metavariables to make the expressions equal, it outputs fals.
+
+In this sense, `isDefEq` is a more generous, coarser notion of equality.
