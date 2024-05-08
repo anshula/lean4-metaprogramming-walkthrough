@@ -60,3 +60,52 @@ example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
 ```
 
  Our tactic doesn’t print the newest hypothesis.
+
+
+# How to fix it: get the context from the goal
+
+The new hypotheses are actually associated to the current goal.
+
+So to get it, we need to modify our function to retrieve all hypotheses from the goal, with `(← goal.getDecl).lctx`.
+
+```lean readingAndChangingTheHypotheses
+elab "print_hypotheses'" : tactic => do
+  let goal ← getMainGoal  -- the dynamically generated hypotheses are associated with this particular goal
+  for ldecl in (← goal.getDecl).lctx do
+    if ldecl.isImplementationDetail then continue
+    let hyp_name := ldecl.userName
+    let hyp_type := ldecl.type
+    logInfo m!"Name: '{hyp_name}'  Type: '{hyp_type}' "
+```
+
+Now when we test it out…
+```lean readingAndChangingTheHypotheses
+example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
+  print_hypotheses' -- prints h1 and h2
+  have h3 : b-a = 1 := by {rw [h1, h2]}
+  print_hypotheses' -- prints h1 and h2 and h3
+  sorry
+```
+… it does update to include the newest hypothesis.
+
+# A cleaner way to fix it: get the context from `withMainContext`
+
+We can also fix the same issue by just adding `withMainContext` to the beginning of the tactic.
+
+```lean readingAndChangingTheHypotheses
+elab "print_hypotheses''" : tactic => withMainContext do
+  for ldecl in ← getLCtx do
+    if ldecl.isImplementationDetail then continue
+    let hyp_name := ldecl.userName
+    let hyp_type := ldecl.type
+    logInfo m!"Name: '{hyp_name}'  Type: '{hyp_type}' "
+```
+
+
+Why does this work?
+
+ If you run a tactic, Lean works with the initial context of the theorem.
+
+If you run `withMainContext`, then Lean gets the first goal (that is, the main metavariable), and adds in all of its context, and works with that.
+
+We did that manually earlier by calling `goal ← getMainGoal` and then  `(← goal.getDecl).lctx`.  But `withMainContext` adds in all the right stuff for us.
