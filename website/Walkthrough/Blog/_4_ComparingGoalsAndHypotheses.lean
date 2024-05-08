@@ -23,6 +23,8 @@ But suppose we actually want to save the hypotheses, not just print them out, so
 Let's do that now.
 
 ```lean comparingGH
+open Lean Elab Meta Tactic
+
 def getHypotheses : TacticM (List LocalDecl) := do
   let mut hypotheses : List LocalDecl := []
   let goal ← getMainGoal
@@ -91,3 +93,32 @@ Note that there were three “layers” we had to peel back to get to the releva
 - then running `type` on the declaration gets you the **expression** (the thing that actually contains relevant, human-readable information about the goal e.g. the expression `1+1=2`).
 
 The `getMainTarget` function conveniently performs this sequence of operations in one go.
+
+# Comparing hypotheses to the goal with an “assumption” tactic
+Finally, using the functions we made to read the goal and hypothesis, we are able to make an “assumption” tactic.
+
+```lean comparingGH
+elab "assump" : tactic => do
+  let goal_decl ← getGoalDecl
+  for hyp_decl in ← getHypotheses do
+    if ← isDefEq hyp_decl.type goal_decl.type then
+      closeMainGoal hyp_decl.toExpr
+```
+
+We find our function closes the goal when the conclusion is in the hypothesis, and does nothing if not.  Just as expected!
+```lean comparingGH
+example {P : Prop} (p : P): P := by
+  assump -- works
+
+example {P : Prop} : P := by
+  assump -- does nothing
+  sorry
+```
+
+Notice that when we `closeMainGoal` we need to pass it the expression `hyp_decl.toExpr` (the proof of the hypothesis) rather than the expression `hyp_decl.type` (the statement of the hypothesis).    They’re both expressions, but only the proof works as an argument to `closeMainGoal`.
+
+In this example:
+- `hyp_decl.toExpr` is the expression “p” (the “proof” of the proposition P)
+- `hyp_decl.type` is the expression “P” (the proposition P.)
+
+In other words, we need to close the main goal with `hyp_decl.toExpr`  because we actually need the _term_ (the proof of P), rather than the _type_ (the proposition P).
