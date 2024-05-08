@@ -153,7 +153,7 @@ Whenever there are metavariables (or "holes") in an expression, `isDefEq` tries 
 - If it can, it outputs `true`.
 - If there's no way to fill in metavariables to make the expressions equal, it outputs fals.
 
-In this sense, `isDefEq` is a more generous, coarser notion of equality.
+In this sense, `isDefEq` is a more generous, coarser notion of equality.  But we discuss it more in the next chapter.
 
 
 # Throwing errors in the “assumption” tactic
