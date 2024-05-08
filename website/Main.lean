@@ -47,6 +47,7 @@ def demoSite : Site := site Walkthrough.Blog.Introduction /
   static "static" ← "website/static_files"
   "Introduction" Walkthrough.Blog.Introduction
   "Reading-and-Changing-the-Goal" Walkthrough.Blog.ReadingAndChangingTheGoal
+  "Reading-and-Changing-the-Hypotheses" Walkthrough.Blog.ReadingAndChangingTheHypotheses
   "Adding-Goals-and-Hypotheses" Walkthrough.Blog.AddingGoalsAndHypotheses
 
 
