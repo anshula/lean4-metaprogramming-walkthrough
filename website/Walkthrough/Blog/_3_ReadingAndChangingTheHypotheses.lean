@@ -30,11 +30,14 @@ Some of them are not ones a human would think about when solving a theorem, that
 ```lean readingAndChangingTheHypotheses
 
 elab "print_hypotheses" : tactic => do
+  let mut output : MessageData := .ofFormat .nil
   for ldecl in ← getLCtx do
     if ldecl.isImplementationDetail then continue
-    let hyp_name := ldecl.userName
-    let hyp_type := ldecl.type
-    logInfo m!"Name: '{hyp_name}'  Type: '{hyp_type}' "
+    let hypName := ldecl.userName
+    let hypType := ldecl.type
+    let message := m!"Name: '{hypName}'  Type: '{hypType}'\n"
+    output := .compose output message
+  logInfo output
 ```
 
 We can test it out a theorem which has hypotheses that `a=2` and `b=3`.
