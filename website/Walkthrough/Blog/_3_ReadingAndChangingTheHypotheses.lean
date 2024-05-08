@@ -146,6 +146,51 @@ In general, if we ever write a tactic that doesn’t return anything (and perhap
 
 The `Unit` serves the purpose that `void` does in other programming languages — it tells us the function isn’t going to return anything interesting.
 
+# Get a particular hypothesis
+
+What if we want to print a particular hypothesis?
+
+Then we need return values.  So far we've just printing to the screen, and been returning `Unit`. What if we actually want to return values, so that you can use them in another method? We can do that by wrapping the return value (in this case, a `LocalDecl`) in a monad (in this case, `TacticM`).
+
+```lean  readingAndChangingTheHypotheses
+def getHypothesisByName (h : Name) : TacticM LocalDecl := withMainContext do
+  let goal ← getMainGoal  -- the dynamically generated hypotheses are associated with this particular goal
+  for ldecl in (← goal.getDecl).lctx do
+    if ldecl.isImplementationDetail then continue
+    if ldecl.userName == h then
+      return ldecl
+  throwError m!"No hypothesis by the name {h}."
+```
+
+The above works for if you want to call this method within a metaprogram.
+
+But if you want a similar function to call within a theorem, you can only pass in "terms" not names directly.  Here we do some pre-processing on the term to get a name.
+```lean  readingAndChangingTheHypotheses
+
+def getHypothesisByFVarId (h : FVarId) : TacticM LocalDecl := withMainContext do
+  let goal ← getMainGoal  -- the dynamically generated hypotheses are associated with this particular goal
+  for ldecl in (← goal.getDecl).lctx do
+    if ldecl.isImplementationDetail then continue
+    if ldecl.fvarId == h then
+      return ldecl
+  throwError m!"No hypothesis with fvarId {h.name}."
+
+def getHypothesisByTerm (h : TSyntax `term) :  TacticM LocalDecl := withMainContext do
+  let fvarId ← getFVarId h
+  getHypothesisByFVarId fvarId
+
+elab "print_hypothesis_by_name" h:term : tactic =>  withMainContext do
+  let decl ← getHypothesisByTerm h
+  logInfo decl.type
+```
+
+Now we can see this at work in a theorem:
+```lean  readingAndChangingTheHypotheses error:=true
+example (h1 : 1+1=2) (h2: 2+2=4) : True := by
+  print_hypothesis_by_name h1
+```
+
+
 # MetaM vs TacticM
 
 Our `printHypotheses` function worked when we had it return a `TacticM`.
