@@ -542,21 +542,25 @@ Here is our rough strategy for implementing the tactic:
 
 ```lean AGH
 elab "apply_to_target" h:term : tactic => withMainContext do
-  -- the hypothesis being applied (in the form of an expression)
-  let hyp ← elabTerm h none
-  -- infer the type of the hypothesis being applied
-  let t ← inferType hyp
-  -- obtain the conditions and the conclusion using a telescope
-  let (conditions, _, conclusion) ← forallMetaTelescope t
-  -- attempt to unify the conclusion with the main target
-  unless ← isDefEq conclusion (← getMainTarget) do
+  -- Get the hypothesis being applied
+  let hypTerm ← elabTerm h none
+  let hypType ← inferType hypTerm
+
+  -- Obtain the conditions and the conclusion using a telescope
+  let (conditions, _, conclusion) ← forallMetaTelescope hypType
+
+  -- Attempt to unify the conclusion with the main target
+  unless ← isDefEq conclusion (← getGoalType) do
     throwError m!"The conclusion of the hypothesis {h} does not match with the current target."
+
   -- Update the conditions with the values determined by unification
   let conditions ← conditions.mapM instantiateMVars
+
+  -- Set the hypotheses as the new goals
+  appendGoals (conditions.toList.map Expr.mvarId!)
+
   -- assign the conclusion to the current goal
-  (← getMainGoal).assign <| mkAppN hyp conditions
-  -- set the hypotheses as the new goals
-  replaceMainGoal <| conditions.toList.map Expr.mvarId!
+  proveGoal (mkAppN hypTerm conditions)
 
 example : ¬ Nat.Prime (2 * 3) := by
   apply_to_target Nat.not_prime_mul
