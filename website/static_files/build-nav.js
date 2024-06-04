@@ -40,7 +40,7 @@ function addNavBarOpener() {
             <div id="navbar">
                <div id="notscrollable">
                   <div class="title">
-                     <a href="#">
+                     <a href="/#">
                      Hands-on <br/>
                      Tactic Writing <br/>
                      in Lean 4
