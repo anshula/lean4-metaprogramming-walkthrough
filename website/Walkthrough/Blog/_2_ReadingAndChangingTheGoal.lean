@@ -33,7 +33,7 @@ example : True := by
 Please feel free to **paste in these bits of code into your editor**, creating one big Lean file as we go!
 
 
-# Reading the context
+# Reading the current goal
 
 Now, let’s create a tactic `print_goal` that reads what the current goal is.
 ```lean readingAndChangingTheGoal
@@ -48,6 +48,28 @@ Let’s test the tactic:
 example : 1+1=2 := by
   print_goal -- 1+1=2
   trivial
+```
+
+
+# Getting all goals
+
+We've seen before that `getMainGoal` gives us the details of the current goal. The `getUnsolvedGoals` command gives us *all* the active goals in the tactic state.
+
+Here is a tactic that lets us test this out.
+
+```lean readingAndChangingTheGoal
+
+elab "print_goals" : tactic => do
+  let goals ← getUnsolvedGoals
+  for goal in goals do
+    logInfo goal
+
+example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
+  print_goals
+  constructor
+  print_goals
+  all_goals rfl
+
 ```
 
 And we get what we expect.
@@ -254,3 +276,33 @@ example: 1 = 1 ∧ 2 = 2 := by
 
 
 This works just the same!
+
+# Can we just remove the goal?
+
+The list of goals can also be modified with the `setGoals` command.
+
+For example, here is an implementation of a `rotate_goals` tactic that reorders the goals to push the main goal to the end.
+
+```lean readingAndChangingTheGoal
+elab "rotate_goals" : tactic => do
+  let goals ← getUnsolvedGoals
+  setGoals goals.rotateLeft
+
+example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
+  constructor
+  rotate_goals -- the goals are now in a different order
+  all_goals rfl
+```
+
+Now what happens if the user decides to use `setGoals` to just delete the list of active goals?
+
+```lean readingAndChangingTheGoal error := true
+elab "clear_goals" : tactic => do
+  setGoals []
+
+example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
+  constructor
+  clear_goals -- there are no goals here
+```
+
+Doing this indeed clears all the goals in the tactic state, but a low-level kernel error now pops up near the start of the declaration. So Lean can't be tricked into accepting an incomplete proof, and the responsibility of making sure no active goals get dropped is on the meta-programmer.

@@ -8,65 +8,11 @@ open Verso Genre Blog
 
 ```
 
-
 By the end of this section, you'll create a version of the `apply` tactic.  This tactic "applies" a lemma which has a conclusion that matches the current goal, and updates the current goal accordingly.
-
-We will begin by writing tactics to access and modify the goals in the tactic state.
-
-# Getting the goals
-
-We've seen before that `getMainGoal` gives us the details of the current goal. The `getUnsolvedGoals` command gives us *all* the active goals in the tactic state.
-
-Here is a tactic that lets us test this out.
-
-```lean AGH
-open Lean Meta Elab Tactic
-
-elab "print_goals" : tactic => do
-  let goals ← getUnsolvedGoals
-  for goal in goals do
-    logInfo goal
-
-example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
-  print_goals
-  constructor
-  print_goals
-  all_goals rfl
-
-```
-
-# Modifying the goals
-
-The list of goals can also be modified with the `setGoals` command.
-
-Here is an implementation of a `rotate_goals` tactic that reorders the goals to push the main goal to the end.
-
-```lean AGH
-elab "rotate_goals" : tactic => do
-  let goals ← getUnsolvedGoals
-  setGoals goals.rotateLeft
-
-example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
-  constructor
-  rotate_goals -- the goals are now in a different order
-  all_goals rfl
-```
-
-Now what happens if the user decides to use `setGoals` to just delete the list of active goals?
-
-```lean AGH error := true
-elab "clear_goals" : tactic => do
-  setGoals []
-
-example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
-  constructor
-  clear_goals -- there are no goals here
-```
-
-Doing this indeed clears all the goals in the tactic state, but a low-level kernel error now pops up near the start of the declaration. So Lean can't be tricked into accepting an incomplete proof, and the responsibility of making sure no active goals get dropped is on the meta-programmer.
 
 # Adding a new goal
 
+We know how to manipulate a list of goals in Lean (for example, rotating the order of them).
 We will now look at modifying the tactic state beyond just manipulating the list of goals.
 
 *Creating a goal* in Lean is really *creating a metavariable* (a variable whose value a.k.a proof isn’t known yet).
@@ -75,6 +21,8 @@ We will now look at modifying the tactic state beyond just manipulating the list
 We can extract out the basics of goal creation into a helper tactic: `createGoal`.
 
 ```lean AGH
+open Lean Meta Elab Tactic
+
 def createGoal (goalType : Expr) : TacticM Unit :=
 withMainContext do
   let goal ← mkFreshExprMVar goalType
@@ -106,7 +54,6 @@ elab "create_reflexivity_goal" : tactic => do
 
 example : 1 + 2 = 3 := by
   create_reflexivity_goal
-  rotate_goals
   simp; simp
 ```
 
@@ -259,7 +206,7 @@ We typically make progress on a proof in Lean through *tactics*. These have the 
 
 The converse is not true - it is possible to start from a solvable tactic state and go to an unsolvable one, for example by clearing an essential hypothesis or using backwards reasoning on the goal.
 
-# Creating a tactic for backwards reasoning
+# Creating a tactic for backwards reasoning (the `apply` tactic)
 
 So far, we have written tactics that work on the list of active goals or add hypotheses to the local context. To better understand how tactics manipulate the proof state, let's write a simplified version of the `apply` tactic - the tactic that is routinely used in Lean for backwards reasoning, i.e., reasoning backwards from the target.
 
