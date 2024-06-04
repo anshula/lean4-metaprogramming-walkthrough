@@ -297,7 +297,7 @@ h: P → Q
 ⊢ P
 -- ⊢ Q -- we can prove this goal
 ```
-- Set `p` as the main goal
+- We're done.
 ```
 h: P → Q
 ======
@@ -330,6 +330,9 @@ def getHypothesisByFVarId (h : FVarId) : TacticM LocalDecl := withMainContext do
 def getHypothesisByTerm (h : TSyntax `term) :  TacticM LocalDecl := withMainContext do
   let fvarId ← getFVarId h
   getHypothesisByFVarId fvarId
+
+def getGoalType : TacticM Expr := do
+  return ← getMainTarget
 ```
 
 
@@ -409,17 +412,50 @@ As mentioned before, the function `isDefEq` does more than just checking for def
 
 For example, consider the two expressions `(_ * 37)` and `(71 * _)`, where the underscores indicate "holes" in the expressions. While these expressions are not equal by `==`, they are by `isDefEq`, since they can be made equal by choosing the values for the holes appropriately (so that they both become `71 * 37`). This is the idea behind *unification*, and the `isDefEq` function tries to fill in the holes as much as possible to make the two expressions match up.
 
-The word *meta-variable* was used earlier in a different sense - to refer to a goal in the tactic. However, the two senses of the word are essentially the same - a goal can be thought of as a hole for a proof of the appropriate type.
+The word *meta-variable* was used earlier to refer to a _goal_ in the tactic, and here is used to refer to a _hole_ in an expression. However, the two senses of the word are essentially the same — a goal can be thought of as a hole for a proof of the appropriate type.
 
 We can implement the `apply_hypothesis` using a strategy involving unification:
-- Suppose the current goal is `Q`
+- We start with a hypothesis `h` of  type H, and a goal of type `Q`.
+```
+h: H
+======
+⊢ Q
+```
 - Create a meta-variable `?P` for the type of the new goal
-- Check whether the type of the hypothesis unifies with the expression `?P → Q`
-- If the unification succeeds and the meta-variable `?P` is assigned the value `P`, create a meta-variable `p` of type `P` for the new goal
-- Assign the value `h p` to the current goal
-- Set `p` as the main goal
-
-With this approach, we no longer need to check if the hypothesis is an implication and explicitly extracting its antecedent and consequent.
+```
+h: H
+======
+⊢ ?P
+⊢ Q
+```
+- Check whether the type of the hypothesis unifies with the expression `?P → Q` (which really means `anything → Q`).
+```
+h: H -- does this take the form (something → Q)?
+======
+⊢ ?P
+⊢ Q
+```
+- If the unification succeeds and the meta-variable `?P` is assigned the value `P`, create a meta-variable of type `P` for the new goal
+```
+h: P → Q
+======
+⊢ P -- it suffices to prove "P"
+⊢ Q
+```
+- Assign the value `h p` to the goal of type "Q"
+```
+h: P → Q
+======
+⊢ P
+-- ⊢ Q -- we've proven this
+```
+- We're done.
+```
+h: P → Q
+======
+⊢ P
+```
+With this approach, we no longer need to check if the hypothesis is an implication and explicitly extract its antecedent and consequent.
 
 ```lean AGH
 
@@ -427,27 +463,21 @@ elab "apply_hypothesis_unif" h:term : tactic => withMainContext do
   -- get the hypothesis
   let hyp ← getHypothesisByTerm h
 
-  -- try to unify hypothesis with `newTarget → currentTarget`
-  let currentTarget ← getMainTarget
-  let newTarget ← mkFreshExprMVar none
-  unless ← isDefEq hyp.type (← mkArrow newTarget currentTarget) do
+  -- try to unify hypothesis with `P? → Q` where `Q` is the currentGoal
+  let Q ← getGoalType
+  let P? ← mkFreshExprMVar none
+  unless ← isDefEq hyp.type (← mkArrow P? Q) do
     throwError m!"The hypothesis is expected to be an implication
       with conclusion matching the current goal."
 
-  -- fill in holes in `newTarget`
-  let newTarget ← instantiateMVars newTarget
+  -- fill in holes in `P` according to what made it unify with `P?`
+  let P ← instantiateMVars P?
 
-  -- create a new goal of type `newTarget`
-  let newGoal ← mkFreshExprMVar newTarget
+  -- create a new goal of type `P`
+  let newGoal ← createGoal' P
 
-  -- logging information about the type of the new goal
-  logInfo m!"The new target was updated from {currentTarget} to {newTarget}."
-
-  -- assign the value `h newGoal` to the current goal
-  (← getMainGoal).assign (.app hyp.toExpr newGoal)
-
-  -- set `newGoal` as the main goal
-  replaceMainGoal [newGoal.mvarId!]
+  -- close off the current goal with `h newGoal`
+  proveGoal (.app hyp.toExpr newGoal)
 ```
 
 And the tactic works the same as before.
