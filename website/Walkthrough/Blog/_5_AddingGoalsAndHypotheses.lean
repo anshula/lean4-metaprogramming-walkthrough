@@ -414,43 +414,31 @@ As mentioned before, the function `isDefEq` does more than just checking for def
 For example, consider the two expressions `(7 * _)` and `(_ * 3)`, where the underscores indicate "holes" in the expressions. While these expressions are not equal by `==`, they are by `isDefEq`, since they can be made equal by choosing the values for the holes appropriately (so that they both become `7 * 3`). This is the idea behind *unification*, and the `isDefEq` function tries to fill in the holes as much as possible to make the two expressions match up.
 
 ```lean AGH
-elab "unification_example" : tactic => do
-  -- write some expressions for multiplication
-  -- (ignore this for now. -- we'll get into expressions in the next chapter.)
-  let hmul := Expr.const `HMul.hMul [Lean.Level.zero, Lean.Level.zero, Lean.Level.zero]
-  let nat := Expr.const ``Nat []
-  let inst :=   mkApp2 (Expr.const `instHMul [Lean.Level.zero]) nat (.const `instMulNat [])
-  let multiply := mkApp4 hmul nat nat nat inst
-
-  -- use mkFreshExprMVar to create holes
-  let hole1? ← mkFreshExprMVar (Expr.const ``Nat [])
-  let hole2? ← mkFreshExprMVar (Expr.const ``Nat [])
-
-  -- use isDefEq to compare expressions
-  let a := mkApp2 multiply (toExpr 7) hole1? -- (7 * _)
-  let b := mkApp2 multiply hole2? (toExpr 3) -- (_ * 3)
+elab "try_to_unify" a:term "and" b:term : tactic => do
+  let a ← Term.elabTermAndSynthesize a none
+  let b ← Term.elabTermAndSynthesize b none
   logInfo m!"This is a: {a}"
   logInfo m!"This is b: {b}"
+
+  -- use isDefEq to compare expressions
   let aEqB ← isDefEq a b
-  logInfo m!"It is {aEqB} that expressions a and b can be unified."
+  logInfo m!"It is {aEqB} that expressions a and b can be made equal (according to isDefEq)."
 
-  -- use instantiateMVars to find out how isDefEq filled the holes
+  --... but the expressions still aren't exactly equal
   let aEqB :=  a == b
-  logInfo m!"It is {aEqB} that expressions a and b are exactly equal before instantiating metavars."
+  logInfo m!"It is {aEqB} that expressions a and b are exactly equal (according to ==)."
 
+  -- use instantiateMVars to find out how isDefEq filled the holes, and fill them accordingly
   let a ← instantiateMVars a
   let b ← instantiateMVars a
   let aEqB :=  a == b
-  logInfo m!"It is {aEqB} that expressions a and b are exactly equal after instantiating metavars."
+  logInfo m!"It is {aEqB} that expressions a and b are exactly equal, after using unification to fill holes."
 
   -- show the variables after holes are filled
-  logInfo m!"This is a after unification: {a}"
-  logInfo m!"This is b after unification: {b}"
-
-
-
+  logInfo m!"This is a after filling holes: {a}"
+  logInfo m!"This is b after filling holes: {b}"
 example : True := by
-  unification_example
+  try_to_unify (_+7) and (3+_)
   simp
 ```
 
