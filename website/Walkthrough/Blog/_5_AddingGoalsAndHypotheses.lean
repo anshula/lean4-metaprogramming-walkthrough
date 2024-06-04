@@ -417,12 +417,9 @@ For example, consider the two expressions `(7 * _)` and `(_ * 3)`, where the und
 elab "try_to_unify" a:term "and" b:term : tactic => do
   let a ← Term.elabTermAndSynthesize a none
   let b ← Term.elabTermAndSynthesize b none
-  logInfo m!"This is a: {a}"
-  logInfo m!"This is b: {b}"
 
   -- use isDefEq to compare expressions
   let aEqB ← isDefEq a b
-  logInfo m!"It is {aEqB} that expressions a and b can be made equal (according to isDefEq)."
 
   --... but the expressions still aren't exactly equal
   let aEqB :=  a == b
@@ -434,7 +431,7 @@ elab "try_to_unify" a:term "and" b:term : tactic => do
   let aEqB :=  a == b
   logInfo m!"It is {aEqB} that expressions a and b are exactly equal, after using unification to fill holes."
 
-  -- show the variables after holes are filled
+  -- show vars after using unification to fill hole
   logInfo m!"This is a after filling holes: {a}"
   logInfo m!"This is b after filling holes: {b}"
 example : True := by
