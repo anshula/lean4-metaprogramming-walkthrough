@@ -156,11 +156,10 @@ function expandSubMenuOfCurrentNavItem() {
         selectedNavItem.appendChild(subMenu);
 
 
-    // // Attach events to each sub-menu-item -- on link change
-    // window.navigation.addEventListener("navigate", (event) => {
-    //     // console.log('location changed!');
-    //     selectCurrentSubNavItem();
-    // })
+    // Whenever the hash link changes, re-select the current subnav item
+    window.addEventListener('hashchange', function () {
+        selectCurrentSubNavItem()
+    });
 
     }
 
@@ -172,6 +171,9 @@ function selectCurrentSubNavItem() {
     document.querySelectorAll('.sub-menu-item').forEach(function(link) {
         if (link.href.split("#")[1] === currentLocation) {
             link.classList.add('subselected');
+        }
+        else {
+            link.classList.remove('subselected');
         }
     });
 }
