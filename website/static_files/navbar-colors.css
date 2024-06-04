@@ -16,7 +16,7 @@ color: #8E7280; /* Mid- Purple */
 /* ----------- HOVER ----------- */
 
 
-#navbar .chapter a:hover .subchaptitle {
+#navbar .chapter a:hover .subchaptitle, #navbar .chapter a.selected .subchaptitle{
     background-color: #442E39; /* Darker Purple on hover for subchapter title */
 }
 

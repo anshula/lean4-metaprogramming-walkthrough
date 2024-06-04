@@ -3,6 +3,8 @@ function buildNav() {
     wrapUpContent()
     addNavBarOpener()
     populateNavBar(navElements)
+    selectCurrentNavItem()
+    expandSubMenuOfCurrentNavItem()
     activateMenuButton()
     // $(".navbarcollapsebutton").click()
 }
@@ -50,7 +52,7 @@ function addNavBarOpener() {
 
                <div id="scrollable">
                   <div>
-                     <div class="chapter" id="compactness">
+                     <div class="chapter" id="chapnav">
                         <a href="#" class="chaptitle">Table of Contents</a>
                      </div>
                   </div>
@@ -75,12 +77,8 @@ function addNavBarOpener() {
 
 function populateNavBar(navElements) {
 
-    
-
-   
-
     // Create and populate the sidebar with links to those elements
-    var sidebar = document.getElementById('compactness');
+    var sidebar = document.getElementById('chapnav');
     var sidebarContent = '';
     navElements.forEach(function (element, index) {
         // Assign an id to each h2 element if it doesn't have one
@@ -90,14 +88,40 @@ function populateNavBar(navElements) {
 
         sidebarContent += '<a href="' + element.href + '"><div class="subchaptitle">' + element.textContent + '</div></a>';
     });
+
+    // navElements.forEach(function (element, index) {
+    //     if (element.classList.contains('subchap')) {
+    //         // Get all <h2> elements within this subchapter
+    //         var h2Elements = element.querySelectorAll('h2');
+    //         h2Elements.forEach(function (h2, idx) {
+    //             // Ensure each h2 has an id for linking
+    //             if (!h2.id) {
+    //                 h2.id = 'subchap' + index + '-h2-' + idx;
+    //             }
+    //             // Append each h2 to the sidebar content
+    //             sidebarContent += '<a href="#' + h2.id + '"><div class="subchaptitle">' + h2.textContent + '</div></a>';
+    //         });
+    //     }
+    // });
+
     sidebarContent += '';
     sidebar.innerHTML += sidebarContent;
-
-
-    
 }
 
+function selectCurrentNavItem() {
+        var currentLocation = window.location.href.slice(0, -1); // get rid of "/" at end
+        document.querySelectorAll('#chapnav a').forEach(function(link) {
+            console.log("cur",currentLocation)
+            console.log("href",link.href)
+            if (link.href === currentLocation) {
+                link.classList.add('selected');
+            }
+        });
+}
 
+function expandSubMenuOfCurrentNavItem() {
+    
+}
 /*-------------------------------------------------------*/
 /* Make navbar collapse button work */
 /*-------------------------------------------------------*/
