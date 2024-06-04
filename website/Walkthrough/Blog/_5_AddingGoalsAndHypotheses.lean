@@ -423,13 +423,16 @@ elab "try_to_unify" a:term "and" b:term : tactic => do
 
   --... but the expressions still aren't exactly equal
   let aEqB :=  a == b
-  logInfo m!"It is {aEqB} that expressions a and b are exactly equal (according to ==)."
+  logInfo m!"It is {aEqB} that expressions a and b are exactly equal
+   (according to ==)."
 
-  -- use instantiateMVars to find out how isDefEq filled the holes, and fill them accordingly
+  -- use instantiateMVars to find out how isDefEq filled the holes
+  -- and fill them accordingly
   let a ← instantiateMVars a
   let b ← instantiateMVars a
   let aEqB :=  a == b
-  logInfo m!"It is {aEqB} that expressions a and b are exactly equal, after using unification to fill holes."
+  logInfo m!"It is {aEqB} that expressions a and b are exactly equal,
+   after using unification to fill holes."
 
   -- show vars after using unification to fill hole
   logInfo m!"This is a after filling holes: {a}"
@@ -487,18 +490,21 @@ With this approach, we no longer need to check if the hypothesis is an implicati
 
 ```lean AGH
 
-elab "apply_hypothesis_unif" h:term : tactic => withMainContext do
+elab "apply_hypothesis_unif" h:term : tactic =>
+withMainContext do
   -- get the hypothesis
   let hyp ← getHypothesisByTerm h
 
-  -- try to unify hypothesis with `P? → Q` where `Q` is the currentGoal
+  -- call the current goal Q
   let Q ← getGoalType
+
+  -- try to unify hypothesis with `P? → Q`
   let P? ← mkFreshExprMVar none
   unless ← isDefEq hyp.type (← mkArrow P? Q) do
     throwError m!"The hypothesis is expected to be an implication
       with conclusion matching the current goal."
 
-  -- fill in holes in `P` according to what made it unify with `P?`
+  -- fill in holes in `P` with what made it unify with `P?`
   let P ← instantiateMVars P?
 
   -- create a new goal of type `P`
@@ -546,20 +552,21 @@ elab "apply_to_target" h:term : tactic => withMainContext do
   let hypTerm ← elabTerm h none
   let hypType ← inferType hypTerm
 
-  -- Obtain the conditions and the conclusion using a telescope
+  -- Obtain conditions and the conclusion using a telescope
   let (conditions, _, conclusion) ← forallMetaTelescope hypType
 
   -- Attempt to unify the conclusion with the main target
   unless ← isDefEq conclusion (← getGoalType) do
-    throwError m!"The conclusion of the hypothesis {h} does not match with the current target."
+    throwError m!"The conclusion of the hypothesis {h}
+    does not match with the current target."
 
-  -- Update the conditions with the values determined by unification
+  -- Fill holes in conditions via unification
   let conditions ← conditions.mapM instantiateMVars
 
-  -- Set the hypotheses as the new goals
+  -- Set the conditions as the new goals
   appendGoals (conditions.toList.map Expr.mvarId!)
 
-  -- assign the conclusion to the current goal
+  -- Assign the conclusion to the current goal
   proveGoal (mkAppN hypTerm conditions)
 
 example : ¬ Nat.Prime (2 * 3) := by
