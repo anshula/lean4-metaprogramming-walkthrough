@@ -71,6 +71,32 @@ example : 1 + 2 = 3 := by
   simp; exact Nat.prime_two
 ```
 
+# Proving a Goal
+
+Remember:
+- *Creating a goal* in Lean is really *creating a metavariable* (a variable whose value a.k.a proof isn’t known yet).
+- *Proving a goal* in Lean is *assigning a value a.k.a proof to that metavariable*.
+
+So, we can prove a goal by passing in an expression for the term that matches the goal's type.
+
+```lean AGH
+def proveGoal (proof : Expr) : TacticM Unit :=
+withMainContext do
+  (← getMainGoal).assign proof
+  replaceMainGoal []
+```
+
+We can see this in action here:
+```lean AGH
+elab "prove_goal" t:term : tactic => do
+  let e ← Term.elabTerm t none
+  proveGoal e
+
+example : 1 + 2 = 3 := by
+  create_goal (Nat.Prime 2)
+  simp; prove_goal Nat.prime_two
+```
+
 
 # Adding a Hypothesis
 
@@ -118,7 +144,7 @@ example : 1 + 2 = 3 := by
   simp
 ```
 
-# Catching Errors when Adding Hypotheses
+# Did We Prove the Hypothesis?
 
 Lean will technically let us create bogus hypotheses.
 
@@ -277,7 +303,19 @@ h: P → Q
 ======
 ⊢ P
 ```
-Here is what this strategy looks like translated into code.  Parts of this code are deliberately sub-optimal; we'll see ways of improving it shortly.
+
+To do this, we'll use a helper function `createGoal'` which unlike our previous `createGoal`, actually returns the new goal.
+
+```lean AGH
+def createGoal' (goalType : Expr) : TacticM Expr :=
+withMainContext do
+  let goal ← mkFreshExprMVar goalType
+  appendGoals [goal.mvarId!]
+  return goal
+```
+
+
+Here is what this full strategy looks like translated into code.  Parts of this code are deliberately sub-optimal; we'll see ways of improving it shortly.
 
 
 ```lean AGH show:=false
@@ -294,14 +332,19 @@ def getHypothesisByTerm (h : TSyntax `term) :  TacticM LocalDecl := withMainCont
   getHypothesisByFVarId fvarId
 ```
 
+
+
+And here is the tactic:
+
 ```lean AGH
 elab "apply_hypothesis" h:term : tactic =>
 withMainContext do
+
   -- ensure that the hypothesis is an implication
   let hyp ← getHypothesisByTerm h
   guard hyp.type.isArrow
 
-  -- extract the implication's antecedent & consequent
+  -- extract implication's antecedent & consequent, or throw error
   let .forallE _ P Q _ := hyp.type | unreachable!
 
   -- ensure that the conclusion of `h` matches the target
@@ -310,13 +353,11 @@ withMainContext do
     does not match the current target."
 
   -- create a new goal of type `P`
-  let newGoal ← mkFreshExprMVar P
+  let newGoal ← createGoal' P
 
   -- close off the current goal with `h newGoal`
-  (← getMainGoal).assign (.app hyp.toExpr newGoal)
+  proveGoal (.app hyp.toExpr newGoal)
 
-  -- set `newGoal` as the main goal
-  replaceMainGoal [newGoal.mvarId!]
 
 example (h : Even 2 → Even 4) : Even 4 := by
   apply_hypothesis h -- the goal is now `Even 2`
@@ -349,14 +390,12 @@ withMainContext do
     throwError m!"The type of the conclusion of {h}
     does not match the current target."
 
-  -- create a new goal of type `P`
-  let newGoal ← mkFreshExprMVar P
+   -- create a new goal of type `P`
+  let newGoal ← createGoal' P
 
-  -- assign the value `h newGoal` to the current goal
-  (← getMainGoal).assign (.app hyp.toExpr newGoal)
+  -- close off the current goal with `h newGoal`
+  proveGoal (.app hyp.toExpr newGoal)
 
-  -- set `newGoal` as the main goal
-  replaceMainGoal [newGoal.mvarId!]
 ```
 Now the example works as intended.
 ```lean AGH
@@ -438,6 +477,7 @@ Here is our rough strategy for implementing the tactic:
 - Attempt to unify `Q` with the current target
 - Assign the value `h p₁ p₂ ... pₖ ...` to the current goal, where `h` is the hypothesis being applied
 - Make the hypotheses `#[P₁, P₂, ..., Pₖ, ...]` the new targets
+
 
 ```lean AGH
 elab "apply_to_target" h:term : tactic => withMainContext do
