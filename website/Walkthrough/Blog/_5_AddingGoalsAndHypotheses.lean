@@ -347,7 +347,8 @@ withMainContext do
   let hyp ← getHypothesisByTerm h
   guard hyp.type.isArrow
 
-  -- extract implication's antecedent & consequent, or throw error
+  -- extract implication's antecedent & consequent
+  -- or throw error if the hypothesis type is not a .forall
   let .forallE _ P Q _ := hyp.type | unreachable!
 
   -- ensure that the conclusion of `h` matches the target
@@ -410,7 +411,49 @@ example (h : Even 2 → Even 4) : Even (2 * 2) := by
 
 As mentioned before, the function `isDefEq` does more than just checking for definitional equality - it also handles the *unification* (roughly, filling in holes) of *expressions containing meta-variables* (roughly, expressions with holes).
 
-For example, consider the two expressions `(_ * 37)` and `(71 * _)`, where the underscores indicate "holes" in the expressions. While these expressions are not equal by `==`, they are by `isDefEq`, since they can be made equal by choosing the values for the holes appropriately (so that they both become `71 * 37`). This is the idea behind *unification*, and the `isDefEq` function tries to fill in the holes as much as possible to make the two expressions match up.
+For example, consider the two expressions `(7 * _)` and `(_ * 3)`, where the underscores indicate "holes" in the expressions. While these expressions are not equal by `==`, they are by `isDefEq`, since they can be made equal by choosing the values for the holes appropriately (so that they both become `7 * 3`). This is the idea behind *unification*, and the `isDefEq` function tries to fill in the holes as much as possible to make the two expressions match up.
+
+```lean AGH
+elab "unification_example" : tactic => do
+  -- write some expressions for multiplication
+  -- (ignore this for now. -- we'll get into expressions in the next chapter.)
+  let hmul := Expr.const `HMul.hMul [Lean.Level.zero, Lean.Level.zero, Lean.Level.zero]
+  let nat := Expr.const ``Nat []
+  let inst :=   mkApp2 (Expr.const `instHMul [Lean.Level.zero]) nat (.const `instMulNat [])
+  let multiply := mkApp4 hmul nat nat nat inst
+
+  -- use mkFreshExprMVar to create holes
+  let hole1? ← mkFreshExprMVar (Expr.const ``Nat [])
+  let hole2? ← mkFreshExprMVar (Expr.const ``Nat [])
+
+  -- use isDefEq to compare expressions
+  let a := mkApp2 multiply (toExpr 7) hole1? -- (7 * _)
+  let b := mkApp2 multiply hole2? (toExpr 3) -- (_ * 3)
+  logInfo m!"This is a: {a}"
+  logInfo m!"This is b: {b}"
+  let aEqB ← isDefEq a b
+  logInfo m!"It is {aEqB} that expressions a and b can be unified."
+
+  -- use instantiateMVars to find out how isDefEq filled the holes
+  let aEqB :=  a == b
+  logInfo m!"It is {aEqB} that expressions a and b are exactly equal before instantiating metavars."
+
+  let a ← instantiateMVars a
+  let b ← instantiateMVars a
+  let aEqB :=  a == b
+  logInfo m!"It is {aEqB} that expressions a and b are exactly equal after instantiating metavars."
+
+  -- show the variables after holes are filled
+  logInfo m!"This is a after unification: {a}"
+  logInfo m!"This is b after unification: {b}"
+
+
+
+example : True := by
+  unification_example
+  simp
+```
+
 
 The word *meta-variable* was used earlier to refer to a _goal_ in the tactic, and here is used to refer to a _hole_ in an expression. However, the two senses of the word are essentially the same — a goal can be thought of as a hole for a proof of the appropriate type.
 
@@ -489,9 +532,10 @@ example (h : Even 2 → Even 4) : Even (2 * 2) := by
 
 # Generalizing the 'apply' Tactic
 
-To finish off this chapter, we'll generalize our `apply_hypothesis` tactic to scenarios where the type of the argument is not just a single implication.
+To finish off this chapter, we'll generalize our `apply_hypothesis` tactic to scenarios where the type of the argument is not just a single implication.  (The [Lean 4 Metaprogramming Book](https://leanprover-community.github.io/lean4-metaprogramming-book/main/04_metam.html?highlight=apply#deconstructing-expressions) goes through this example in detail.)
 
 For example, suppose we have a target like `¬Nat.Prime (2 * 3)` that we want to prove by backwards reasoning using `Nat.not_prime_mul` (shown below), which says that the product of two numbers is not prime when those numbers are both not equal to 1.
+
 
 ```lean AGH
 #check Nat.not_prime_mul
@@ -501,12 +545,14 @@ For example, suppose we have a target like `¬Nat.Prime (2 * 3)` that we want to
 
 Lean contains utilities for taking expressions of the form `P₁ → (P₂ → ... → Pₖ → (... → Q))` and extracting the hypotheses `#[P₁, P₂, ..., Pₖ, ...]` along with the conclusion `Q` (which go under the fanciful name of "telescopes"). These turn out to be exactly what we need to implement a version of the `apply` tactic that does what we want.
 
+
 Here is our rough strategy for implementing the tactic:
 - Infer the type of the hypothesis being applied
 - Using a telescope, obtain the list of meta-variables `#[p₁, p₂, ..., pₖ, ...]` for the conditions along with the conclusion `Q`
 - Attempt to unify `Q` with the current target
 - Assign the value `h p₁ p₂ ... pₖ ...` to the current goal, where `h` is the hypothesis being applied
 - Make the hypotheses `#[P₁, P₂, ..., Pₖ, ...]` the new targets
+
 
 
 ```lean AGH
