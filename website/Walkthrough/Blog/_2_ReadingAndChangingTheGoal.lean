@@ -5,7 +5,7 @@ open Verso Genre Blog
 
 #doc (Page) "Reading and Changing the Goal" =>
 
-# A first tactic
+# A First Tactic
 
 ```leanInit readingAndChangingTheGoal
 ```
@@ -33,7 +33,7 @@ example : True := by
 Please feel free to **paste in these bits of code into your editor**, creating one big Lean file as we go!
 
 
-# Reading the current goal
+# Reading the Current Goal
 
 Now, let’s create a tactic `print_goal` that reads what the current goal is.
 ```lean readingAndChangingTheGoal
@@ -51,7 +51,7 @@ example : 1+1=2 := by
 ```
 
 
-# Getting all goals
+# Reading All Goals
 
 We've seen before that `getMainGoal` gives us the details of the current goal. The `getUnsolvedGoals` command gives us *all* the active goals in the tactic state.
 
@@ -74,9 +74,44 @@ example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
 
 And we get what we expect.
 
-# Modifying the context
+
+# Switching Around Goals
 
 Now we can read the goal.  Let’s modify it.
+
+The list of goals can also be modified with the `setGoals` command.
+
+For example, here is an implementation of a `rotate_goals` tactic that reorders the goals to push the main goal to the end.
+
+```lean readingAndChangingTheGoal
+elab "rotate_goals" : tactic => do
+  let goals ← getUnsolvedGoals
+  setGoals goals.rotateLeft
+
+example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
+  constructor
+  rotate_goals -- the goals are now in a different order
+  all_goals rfl
+```
+
+# Deleting Goals
+
+Now what happens if the user decides to use `setGoals` to just delete the list of active goals?
+
+```lean readingAndChangingTheGoal error := true
+elab "clear_goals" : tactic => do
+  setGoals []
+
+example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
+  constructor
+  clear_goals -- there are no goals here
+```
+
+Doing this indeed clears all the goals in the tactic state, but a low-level kernel error now pops up near the start of the declaration. So Lean can't be tricked into accepting an incomplete proof, and the responsibility of making sure no active goals get dropped is on the meta-programmer.
+
+# Modifying Goals
+
+Let's write a tactic that modifies the goal in a more significant way.
 
 Let’s write a tactic that turns a theorem into its contrapositive.  First, let’s prove that a contrapositive tactic could work.
 ```lean readingAndChangingTheGoal
@@ -127,7 +162,7 @@ example : P → True := by
 
 So that’s “elaboration” and “macros” — we can use either to write Lean tactics.
 
-# Comparing `macro` and `elab`
+# Writing Tactics with `macro` vs `elab`
 
 We noticed that `apply` works easily within a `macro`, but not within an `elab`.  It’s the same with lots of Lean tactics, for example, `sorry`.
 
@@ -158,7 +193,7 @@ As such, if your tactic doesn’t have any real programming logic, and is just c
 
 If there’s a task at hand that requires some level of customization, you should use `elab`.
 
-# Providing arguments to tactics
+# Providing Arguments to Tactics
 
 We can also provide arguments to a `macro` or `elab`.  Here’s an example where arguments come in handy.
 
@@ -238,7 +273,7 @@ example: 1=1 ∧ 2=2 := by
   and_then constructor rfl
 ```
 
-# Creating more intuitive syntax for tactics
+# Creating Intuitive Syntax for Tactics
 
 Instead of writing `and_then constructor rfl`, it might be more intuitive to write the above tactic as `constructor and_then rfl`.
 
@@ -259,7 +294,7 @@ example: 1 = 1 ∧ 2 = 2 := by
 
 
 
-# Another way to create more intuitive syntax for tactics
+# Another Way to Create Intuitive Syntax for tTactics
 
 We can avoid using `syntax` altogether in this particular case, and just declare the macro with the arguments fed in the appropriate places.
 
@@ -276,33 +311,3 @@ example: 1 = 1 ∧ 2 = 2 := by
 
 
 This works just the same!
-
-# Can we just remove the goal?
-
-The list of goals can also be modified with the `setGoals` command.
-
-For example, here is an implementation of a `rotate_goals` tactic that reorders the goals to push the main goal to the end.
-
-```lean readingAndChangingTheGoal
-elab "rotate_goals" : tactic => do
-  let goals ← getUnsolvedGoals
-  setGoals goals.rotateLeft
-
-example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
-  constructor
-  rotate_goals -- the goals are now in a different order
-  all_goals rfl
-```
-
-Now what happens if the user decides to use `setGoals` to just delete the list of active goals?
-
-```lean readingAndChangingTheGoal error := true
-elab "clear_goals" : tactic => do
-  setGoals []
-
-example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
-  constructor
-  clear_goals -- there are no goals here
-```
-
-Doing this indeed clears all the goals in the tactic state, but a low-level kernel error now pops up near the start of the declaration. So Lean can't be tricked into accepting an incomplete proof, and the responsibility of making sure no active goals get dropped is on the meta-programmer.

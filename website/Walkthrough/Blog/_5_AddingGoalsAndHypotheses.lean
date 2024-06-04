@@ -10,7 +10,7 @@ open Verso Genre Blog
 
 By the end of this section, you'll create a version of the `apply` tactic.  This tactic "applies" a lemma which has a conclusion that matches the current goal, and updates the current goal accordingly.
 
-# Adding a new goal
+# Adding a Goal
 
 We know how to manipulate a list of goals in Lean (for example, rotating the order of them).
 We will now look at modifying the tactic state beyond just manipulating the list of goals.
@@ -72,7 +72,7 @@ example : 1 + 2 = 3 := by
 ```
 
 
-# Adding a new hypothesis
+# Adding a Hypothesis
 
 Similarly, we can extract out the basics of hypothesis creation into a helper tactic: `createHypothesis`.
 
@@ -118,7 +118,7 @@ example : 1 + 2 = 3 := by
   simp
 ```
 
-# Catching errors when adding a hypothesis
+# Catching Errors when Adding Hypotheses
 
 Lean will technically let us create bogus hypotheses.
 
@@ -183,11 +183,11 @@ example : 0=1 := by
   assumption
 ```
 
-# Adding a known theorem as a hypothesis
+# Looking Into the Environment
 
-We've previously seen that it's possible to retrieve the statement and proof of a theorem from the environment given its name.
+It is possible retrieve the statement and proof of a theorem from the environment given its name using `(← getEnv).find?`.
 
-As an easy application of the tools we've developed so far, let's write a tactic that takes the name of a theorem in the environment and adds it as a local hypothesis.
+As an easy application of the tools we've developed so far, we can write a tactic that takes the name of a theorem in the environment and adds it as a local hypothesis.
 
 ```lean AGH
 elab "add_theorem_as_hypothesis" nm:name : tactic => do
@@ -200,19 +200,22 @@ example : 1 + 2 = 2 + 1 := by
   exact (h 1 2)
 ```
 
-# Making progress on a proof state
+# Implementing the 'apply' Tactic
 
 We typically make progress on a proof in Lean through *tactics*. These have the effect of replacing the current proof state with another, in a way that preserves provability (i.e., if the new set of goals is solvable, then so is the old one).
 
 The converse is not true - it is possible to start from a solvable tactic state and go to an unsolvable one, for example by clearing an essential hypothesis or using backwards reasoning on the goal.
 
-# Creating a tactic for backwards reasoning (the `apply` tactic)
-
 So far, we have written tactics that work on the list of active goals or add hypotheses to the local context. To better understand how tactics manipulate the proof state, let's write a simplified version of the `apply` tactic - the tactic that is routinely used in Lean for backwards reasoning, i.e., reasoning backwards from the target.
 
-For example, suppose the goal is to prove that `2 ^ 3` is not a prime number. The library contains the result `Nat.Prime.not_prime_pow`, which says that if `x` and `n` are natural numbers and `2 ≤ n`, then `x ^ n` is not a prime number.
+## An Example
+For example, suppose the goal is to prove that `2 ^ 3` is not a prime number.
 
-A mathematician would say "to show that `2 ^ 3` is not prime, it is sufficient to show that `2 ≤ 3`, by the result `Nat.Prime.not_prime_pow`." (except maybe for the last bit). The `apply` tactic is a way to formally mirror this style of reasoning in Lean.
+And suppose we have a theorem called `Nat.Prime.not_prime_pow`, which says that if `x` and `n` are natural numbers and `2 ≤ n`, then `x ^ n` is not a prime number.
+
+A mathematician would say "to show that `2 ^ 3` is not prime, it is sufficient to show that `2 ≤ 3`, by the result `Nat.Prime.not_prime_pow`." (except maybe for the last bit).
+
+A Lean coder would say `apply Nat.Prime.not_prime_pow`.
 
 ```lean AGH
 #check Nat.Prime.not_prime_pow
@@ -223,16 +226,58 @@ example : ¬ Nat.Prime (2 ^ 3) := by
   decide
 ```
 
-We'll start with the scenario where we have a goal `Q` and a local hypothesis of type `P → Q` and try to set the goal to `P` by backwards reasoning.
+## Implementation
 
-Our rough strategy is going to be to:
-- Check whether the hypothesis is an implication, i.e., of the form `P → Q`
+We'll start with the scenario where we have a goal `Q` and a local hypothesis of type `P → Q`.
+
+```
+h: P → Q
+======
+⊢ Q
+```
+
+After calling, `apply`, we want the goal to be `P`.  (Because, indeed, it is sufficient to prove `P`.)
+
+```
+h: P → Q
+======
+⊢ P
+```
+
+Our high-level strategy is going to be to:
+- Check whether the hypothesis `h` is an implication, i.e., of the form `P → Q`
+```
+h: P → Q -- this is an implication
+======
+⊢ Q
+```
 - Check whether the conclusion of the hypothesis `h` matches the type of the current goal
+```
+h: P → Q -- the conclusion of the hypothesis is Q
+======
+⊢ Q -- the type of the current goal is Q
+```
 - Create a new goal `p` of type `P`
-- Assign the value `h p` to the current goal (remember `h` is of form `P → Q`, so `h p` is of form `Q`)
+```
+h: P → Q
+======
+⊢ P -- we create a new goal
+⊢ Q
+```
+- We can prove the goal "Q" assuming the hypothesis "P→ Q" (called `h`) and assuming we've already proved the first goal "P" (called `p`).  So, we can prove the goal "Q" by assigning it the value `h p`.
+```
+h: P → Q
+======
+⊢ P
+-- ⊢ Q -- we can prove this goal
+```
 - Set `p` as the main goal
-
-Here is what this strategy looks like translated into code (parts of this code are deliberately sub-optimal; we'll see ways of improving it shortly):
+```
+h: P → Q
+======
+⊢ P
+```
+Here is what this strategy looks like translated into code.  Parts of this code are deliberately sub-optimal; we'll see ways of improving it shortly.
 
 
 ```lean AGH show:=false
@@ -319,7 +364,7 @@ example (h : Even 2 → Even 4) : Even (2 * 2) := by
   apply_hypothesis_defeq h -- the goal is now `Even 2`
   rw [even_iff_two_dvd]
 ```
-# Unification
+# Implementing the 'apply' Tactic via Unification
 
 As mentioned before, the function `isDefEq` does more than just checking for definitional equality - it also handles the *unification* (roughly, filling in holes) of *expressions containing meta-variables* (roughly, expressions with holes).
 
@@ -373,7 +418,7 @@ example (h : Even 2 → Even 4) : Even (2 * 2) := by
   rw [even_iff_two_dvd]
 ```
 
-# A more general `apply` tactic
+# Generalizing the 'apply' Tactic
 
 To finish off this chapter, we'll generalize our `apply_hypothesis` tactic to scenarios where the type of the argument is not just a single implication.
 
