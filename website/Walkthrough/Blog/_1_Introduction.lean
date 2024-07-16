@@ -49,3 +49,45 @@ Alternatively, you can use the [Lean web editor](https://live.lean-lang.org/) to
 # Downloading Code
 - Here is the [full code](http://google.com) containing everything in the tutorial.
 - Here is a [short "cheat sheet"](http://google.com) containing helper functions you might find useful when metaprogramming in the future.
+  It looks something like this:
+```
+  /- - - - - - - - - - - - - - - - - - -
+  Retrieving the goal
+  - - - - - - - - - - - - - - - - - - -/
+
+  /--  Return goal declaration -/
+  def getGoalDecl : TacticM MetavarDecl := do
+    return ← getMainDecl -- (← getGoalVar).getDecl
+
+  /-- Return goal variable -/
+  def getGoalVar : TacticM MVarId := do
+    return ← getMainGoal
+
+  /-- Return goal expression (the type) -/
+  def getGoalType : TacticM Expr := do
+    return ← getMainTarget -- (← getGoalDecl).type
+
+  /- - - - - - - - - - - - - - - - - - -
+  Creating goals
+  - - - - - - - - - - - - - - - - - - -/
+
+  /-- Create a new goal -/
+  def createGoal (goalType : Expr) : TacticM Unit := do
+    let goal ← mkFreshExprMVar goalType
+    appendGoals [goal.mvarId!]
+
+  /- - - - - - - - - - - - - - - - - - -
+  Retrieving hypotheses
+  - - - - - - - - - - - - - - - - - - -/
+
+  /--  Return hypotheses associated to the main goal -/
+  def getHypotheses : TacticM (List LocalDecl) :=
+  withMainContext do
+    let mut hypotheses : List LocalDecl := []
+    for ldecl in ← getLCtx do
+      if ldecl.isImplementationDetail then continue
+      hypotheses := ldecl :: hypotheses
+    return hypotheses
+
+  ...
+```
