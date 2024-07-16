@@ -54,40 +54,19 @@ Alternatively, you can use the [Lean web editor](https://live.lean-lang.org/) to
   /- - - - - - - - - - - - - - - - - - -
   Retrieving the goal
   - - - - - - - - - - - - - - - - - - -/
-
-  /--  Return goal declaration -/
-  def getGoalDecl : TacticM MetavarDecl := do
-    return ← getMainDecl -- (← getGoalVar).getDecl
-
-  /-- Return goal variable -/
-  def getGoalVar : TacticM MVarId := do
-    return ← getMainGoal
-
-  /-- Return goal expression (the type) -/
-  def getGoalType : TacticM Expr := do
-    return ← getMainTarget -- (← getGoalDecl).type
+  def getGoalDecl : TacticM MetavarDecl := do ...
+  def getGoalVar : TacticM MVarId := do ...
+  def getGoalType : TacticM Expr := do ...
 
   /- - - - - - - - - - - - - - - - - - -
   Creating goals
   - - - - - - - - - - - - - - - - - - -/
-
-  /-- Create a new goal -/
-  def createGoal (goalType : Expr) : TacticM Unit := do
-    let goal ← mkFreshExprMVar goalType
-    appendGoals [goal.mvarId!]
+  def createGoal (goalType : Expr) : TacticM Unit := ...
 
   /- - - - - - - - - - - - - - - - - - -
   Retrieving hypotheses
   - - - - - - - - - - - - - - - - - - -/
-
-  /--  Return hypotheses associated to the main goal -/
-  def getHypotheses : TacticM (List LocalDecl) :=
-  withMainContext do
-    let mut hypotheses : List LocalDecl := []
-    for ldecl in ← getLCtx do
-      if ldecl.isImplementationDetail then continue
-      hypotheses := ldecl :: hypotheses
-    return hypotheses
+  def getHypotheses : TacticM (List LocalDecl) := ...
 
   ...
 ```
