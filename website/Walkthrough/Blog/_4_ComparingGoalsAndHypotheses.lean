@@ -13,7 +13,7 @@ set_option linter.unusedVariables false
 
 By the end of this section, you will have built an `assumption` tactic that compares hypotheses of a theorem to its goal, and proves the theorem if any hypothesis exactly matches the goal.
 
-# Getting hypotheses as a list of declarations
+# Getting Hypotheses as Declarations
 
 We know how to print hypotheses.
 
@@ -37,7 +37,7 @@ Note that instead of returning a `Unit`, we return a `List LocalDecl`.
 
 And we wrap it all up in the `TacticM` monad so we can access the goal.
 
-# Getting hypotheses as a list of expressions
+# Getting Hypotheses as Expressions
 
 The actual human-readable part of the hypothesis isn’t its declaration, though.
 
@@ -66,7 +66,7 @@ example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
 
 Notice that `getHypothesesTypes` returns `List Expr`.  All of the actual mathematical expressions in Lean need to be in type `Expr` to be manipulated.
 
-# Getting the goal as a declaration & expression
+# Getting Goals as Declarations & Expressions
 
 Now how do we get the human-readable part of the goal?  That’s the goal _type_, and we can access it using `getGoalType` below.
 
@@ -93,7 +93,7 @@ Note that there were three “layers” we had to peel back to get to the releva
 
 The `getMainTarget` function conveniently performs this sequence of operations in one go.
 
-# Comparing hypotheses to the goal with an “assumption” tactic
+# Comparing Hypotheses and Goals in the `assumption` Tactic
 Finally, using the functions we made to read the goal and hypothesis, we are able to make an `assumption` tactic (example taken from the [Lean 4 Metaprogramming Book](https://github.com/leanprover-community/lean4-metaprogramming-book)).
 
 ```lean comparingGH
@@ -156,7 +156,7 @@ Whenever there are metavariables (or "holes") in an expression, `isDefEq` tries 
 In this sense, `isDefEq` is a more generous, coarser notion of equality.  But we discuss it more in the next chapter.
 
 
-# Throwing errors in the “assumption” tactic
+# Throwing Errors
 
 Currently, if there are no matching assumptions, the `assump` tactic silently fails, by not changing the proof state.
 
@@ -188,7 +188,7 @@ example {P : Prop} : P := by
 
 
 
-# Rewriting the “assumption” tactic using `findM?`
+# Searching Concisely Using `findM?`
 
 There’s already a function called `findM?` which implements the sort of thing we did — looping over a bunch of items and returning one when a property is true.
 

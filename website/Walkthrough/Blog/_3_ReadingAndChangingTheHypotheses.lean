@@ -13,11 +13,11 @@ set_option linter.unusedVariables false
 open Lean Elab Tactic
 ```
 
-All of the exercises in this section and the next are going to build up to writing an `assumption` tactic — one that looks at all the hypotheses, and if any matches the goal, successfully proves it using that hypothesis.
+All of the exercises in this section and the next are going to build up to writing an 'assumption' tactic — one that looks at all the hypotheses, and if any matches the goal, successfully proves it using that hypothesis.
 
 
 
-# Reading the context — hypotheses
+# Reading All Hypotheses
 
 So now we can read and modify the _goal_ of a theorem.
 
@@ -49,7 +49,7 @@ example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
 
 And we get all the relevant hypotheses.
 
-# What goes wrong: the context doesn't update
+# (Failing at) Reading Newly-Added Hypotheses
 
 Our tactic doesn’t seem to work when we add another hypothesis.
 ```lean readingAndChangingTheHypotheses
@@ -63,7 +63,7 @@ example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
  Our tactic doesn’t print the newest hypothesis.
 
 
-# How to fix it: get the context from the goal
+# (Succeeding at) Reading Newly-Added Hypotheses
 
 The new hypotheses are actually associated to the current goal.
 
@@ -89,7 +89,7 @@ example (a b : ℕ) (h1 : a = 2) (h2: b = 3) : a+b=5 := by
 ```
 … it does update to include the newest hypothesis.
 
-# A cleaner way to fix it: get the context from `withMainContext`
+# (Quickly) Reading Newly-Added Hypotheses
 
 We can also fix the same issue by just adding `withMainContext` to the beginning of the tactic.
 
@@ -111,7 +111,7 @@ If you run `withMainContext`, then Lean gets the first goal (that is, the main m
 
 We did that manually earlier by calling `goal ← getMainGoal` and then  `(← goal.getDecl).lctx`.  But `withMainContext` adds in all the right stuff for us.
 
-# Extracting code out into a separate definition
+# Extracting Code into a Separate Definition
 
 At this point, the tactics have gotten longer, and before we start adding onto this tactic in the next section, we might want to move out parts of the tactic into bits we can reuse in other tactics.
 
@@ -134,7 +134,7 @@ elab "print_hypotheses" : tactic => do
 ```
 
 
-# What to return?
+# Returning Values
 
 The function we used above looked like
 ```
@@ -146,7 +146,7 @@ In general, if we ever write a tactic that doesn’t return anything (and perhap
 
 The `Unit` serves the purpose that `void` does in other programming languages — it tells us the function isn’t going to return anything interesting.
 
-# Get a particular hypothesis
+# Getting a Particular Hypothesis
 
 What if we want to print a particular hypothesis?
 
@@ -191,7 +191,7 @@ example (h1 : 1+1=2) (h2: 2+2=4) : True := by
 ```
 
 
-# MetaM vs TacticM
+# Writing Tactics with MetaM vs TacticM
 
 Our `printHypotheses` function worked when we had it return a `TacticM`.
 
@@ -209,7 +209,7 @@ That’s because working within `TacticM` gives us access to the current goals �
 
 In fact, `TacticM` has access to everything `MetaM` has access too, plus goals.
 
-# So why ever use MetaM?
+# Why ever use MetaM?
 
 So if `TacticM` is just `MetaM` but more, why would we ever use `MetaM`?
 

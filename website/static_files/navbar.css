@@ -33,10 +33,12 @@
 #navbar #scrollable {
     height: calc(100% - 202px);
     overflow-y:scroll;
+
 }
 
 #navbar #scrollable > div {
     padding-top: 0px; /* so there's not too much padding between not scrollable and scrollable */
+    padding-bottom: 30px;
 }
 
  #navbar a {
@@ -102,6 +104,23 @@
      margin-right: 20px;
 }
 
+.sub-menu-item {
+    /*the chapter title*/
+     display: block;
+
+     padding: 10px;
+     padding-left:30px;
+     
+     font-size: 15px;
+     text-align: left;
+     line-height: 1;
+
+     overflow: clip;
+     white-space: nowrap;
+
+     margin-right: 20px;
+     font-weight:normal
+}
 /*-------------------------------------------------------*/
 /* Animated content */
 /*-------------------------------------------------------*/

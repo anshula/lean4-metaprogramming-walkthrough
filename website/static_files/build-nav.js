@@ -3,6 +3,9 @@ function buildNav() {
     wrapUpContent()
     addNavBarOpener()
     populateNavBar(navElements)
+    selectCurrentNavItem()
+    expandSubMenuOfCurrentNavItem()
+    selectCurrentSubNavItem()
     activateMenuButton()
     // $(".navbarcollapsebutton").click()
 }
@@ -37,7 +40,7 @@ function addNavBarOpener() {
             <div id="navbar">
                <div id="notscrollable">
                   <div class="title">
-                     <a href="#">
+                     <a href="/#">
                      Hands-on <br/>
                      Tactic Writing <br/>
                      in Lean 4
@@ -50,8 +53,8 @@ function addNavBarOpener() {
 
                <div id="scrollable">
                   <div>
-                     <div class="chapter" id="compactness">
-                        <a href="#" class="chaptitle">Table of Contents</a>
+                     <div class="chapter" id="chapnav">
+                        <span href="#" class="chaptitle">Table of Contents</span>
                      </div>
                   </div>
                </div>
@@ -75,12 +78,8 @@ function addNavBarOpener() {
 
 function populateNavBar(navElements) {
 
-    
-
-   
-
     // Create and populate the sidebar with links to those elements
-    var sidebar = document.getElementById('compactness');
+    var sidebar = document.getElementById('chapnav');
     var sidebarContent = '';
     navElements.forEach(function (element, index) {
         // Assign an id to each h2 element if it doesn't have one
@@ -90,14 +89,94 @@ function populateNavBar(navElements) {
 
         sidebarContent += '<a href="' + element.href + '"><div class="subchaptitle">' + element.textContent + '</div></a>';
     });
+
+    // navElements.forEach(function (element, index) {
+    //     if (element.classList.contains('subchap')) {
+    //         // Get all <h2> elements within this subchapter
+    //         var h2Elements = element.querySelectorAll('h2');
+    //         h2Elements.forEach(function (h2, idx) {
+    //             // Ensure each h2 has an id for linking
+    //             if (!h2.id) {
+    //                 h2.id = 'subchap' + index + '-h2-' + idx;
+    //             }
+    //             // Append each h2 to the sidebar content
+    //             sidebarContent += '<a href="#' + h2.id + '"><div class="subchaptitle">' + h2.textContent + '</div></a>';
+    //         });
+    //     }
+    // });
+
     sidebarContent += '';
     sidebar.innerHTML += sidebarContent;
+}
 
+function getCurrentPage() {
+    // the current blog entry page
+    return window.location.href.split("#")[0].slice(0, -1); // get rid of everything after "#", then get rid of "/" at end
 
-    
+}
+
+function getCurrentSubPage() {
+    // the the subheading in the page (what comes after the "#" in the URL)
+    return window.location.href.split("#")[1]; // get everything after "#"
+}
+
+function selectCurrentNavItem() {
+        var currentLocation = getCurrentPage()
+        document.querySelectorAll('#chapnav a').forEach(function(link) {
+            if (link.href === currentLocation) {
+                link.classList.add('selected');
+            }
+        });
 }
 
 
+
+function expandSubMenuOfCurrentNavItem() {
+    // Get all h2 elements on the current page
+    const h2Elements = document.querySelectorAll('h2');
+
+    // Find the currently selected navbar item
+    const selectedNavItem = document.querySelector('#chapnav a.selected');
+    if (selectedNavItem) {
+        // Create a container div under the selected nav item to hold the h2 links
+        const subMenu = document.createElement('div');
+        subMenu.className = 'sub-menu';
+        // Generate links for each h2 and append to the sub-menu
+        h2Elements.forEach(h2 => {
+            if (!h2.id) {
+                h2.id = `${h2.textContent.toLowerCase().replace(/\s+/g, '-')}`;
+            }
+            const link = document.createElement('a');
+            link.href = `#${h2.id}`;
+            link.textContent = h2.textContent;
+            link.className = 'sub-menu-item';
+            subMenu.appendChild(link);
+        });
+        // Append the sub-menu to the selected nav item
+        selectedNavItem.appendChild(subMenu);
+
+
+    // Whenever the hash link changes, re-select the current subnav item
+    window.addEventListener('hashchange', function () {
+        selectCurrentSubNavItem()
+    });
+
+    }
+
+
+}
+
+function selectCurrentSubNavItem() {
+    var currentLocation = getCurrentSubPage()
+    document.querySelectorAll('.sub-menu-item').forEach(function(link) {
+        if (link.href.split("#")[1] === currentLocation) {
+            link.classList.add('subselected');
+        }
+        else {
+            link.classList.remove('subselected');
+        }
+    });
+}
 /*-------------------------------------------------------*/
 /* Make navbar collapse button work */
 /*-------------------------------------------------------*/

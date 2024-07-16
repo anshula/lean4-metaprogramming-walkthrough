@@ -8,65 +8,11 @@ open Verso Genre Blog
 
 ```
 
-
 By the end of this section, you'll create a version of the `apply` tactic.  This tactic "applies" a lemma which has a conclusion that matches the current goal, and updates the current goal accordingly.
 
-We will begin by writing tactics to access and modify the goals in the tactic state.
+# Adding a Goal
 
-# Getting the goals
-
-We've seen before that `getMainGoal` gives us the details of the current goal. The `getUnsolvedGoals` command gives us *all* the active goals in the tactic state.
-
-Here is a tactic that lets us test this out.
-
-```lean AGH
-open Lean Meta Elab Tactic
-
-elab "print_goals" : tactic => do
-  let goals ← getUnsolvedGoals
-  for goal in goals do
-    logInfo goal
-
-example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
-  print_goals
-  constructor
-  print_goals
-  all_goals rfl
-
-```
-
-# Modifying the goals
-
-The list of goals can also be modified with the `setGoals` command.
-
-Here is an implementation of a `rotate_goals` tactic that reorders the goals to push the main goal to the end.
-
-```lean AGH
-elab "rotate_goals" : tactic => do
-  let goals ← getUnsolvedGoals
-  setGoals goals.rotateLeft
-
-example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
-  constructor
-  rotate_goals -- the goals are now in a different order
-  all_goals rfl
-```
-
-Now what happens if the user decides to use `setGoals` to just delete the list of active goals?
-
-```lean AGH error := true
-elab "clear_goals" : tactic => do
-  setGoals []
-
-example : 1 + 1 = 2 ∧ 2 + 2 = 4 := by
-  constructor
-  clear_goals -- there are no goals here
-```
-
-Doing this indeed clears all the goals in the tactic state, but a low-level kernel error now pops up near the start of the declaration. So Lean can't be tricked into accepting an incomplete proof, and the responsibility of making sure no active goals get dropped is on the meta-programmer.
-
-# Adding a new goal
-
+We know how to manipulate a list of goals in Lean (for example, rotating the order of them).
 We will now look at modifying the tactic state beyond just manipulating the list of goals.
 
 *Creating a goal* in Lean is really *creating a metavariable* (a variable whose value a.k.a proof isn’t known yet).
@@ -75,6 +21,8 @@ We will now look at modifying the tactic state beyond just manipulating the list
 We can extract out the basics of goal creation into a helper tactic: `createGoal`.
 
 ```lean AGH
+open Lean Meta Elab Tactic
+
 def createGoal (goalType : Expr) : TacticM Unit :=
 withMainContext do
   let goal ← mkFreshExprMVar goalType
@@ -106,7 +54,6 @@ elab "create_reflexivity_goal" : tactic => do
 
 example : 1 + 2 = 3 := by
   create_reflexivity_goal
-  rotate_goals
   simp; simp
 ```
 
@@ -124,8 +71,34 @@ example : 1 + 2 = 3 := by
   simp; exact Nat.prime_two
 ```
 
+# Proving a Goal
 
-# Adding a new hypothesis
+Remember:
+- *Creating a goal* in Lean is really *creating a metavariable* (a variable whose value a.k.a proof isn’t known yet).
+- *Proving a goal* in Lean is *assigning a value a.k.a proof to that metavariable*.
+
+So, we can prove a goal by passing in an expression for the term that matches the goal's type.
+
+```lean AGH
+def proveGoal (proof : Expr) : TacticM Unit :=
+withMainContext do
+  (← getMainGoal).assign proof
+  replaceMainGoal []
+```
+
+We can see this in action here:
+```lean AGH
+elab "prove_goal" t:term : tactic => do
+  let e ← Term.elabTerm t none
+  proveGoal e
+
+example : 1 + 2 = 3 := by
+  create_goal (Nat.Prime 2)
+  simp; prove_goal Nat.prime_two
+```
+
+
+# Adding a Hypothesis
 
 Similarly, we can extract out the basics of hypothesis creation into a helper tactic: `createHypothesis`.
 
@@ -171,7 +144,7 @@ example : 1 + 2 = 3 := by
   simp
 ```
 
-# Catching errors when adding a hypothesis
+# Did We Prove the Hypothesis?
 
 Lean will technically let us create bogus hypotheses.
 
@@ -236,11 +209,11 @@ example : 0=1 := by
   assumption
 ```
 
-# Adding a known theorem as a hypothesis
+# Looking Into the Environment
 
-We've previously seen that it's possible to retrieve the statement and proof of a theorem from the environment given its name.
+It is possible retrieve the statement and proof of a theorem from the environment given its name using `(← getEnv).find?`.
 
-As an easy application of the tools we've developed so far, let's write a tactic that takes the name of a theorem in the environment and adds it as a local hypothesis.
+As an easy application of the tools we've developed so far, we can write a tactic that takes the name of a theorem in the environment and adds it as a local hypothesis.
 
 ```lean AGH
 elab "add_theorem_as_hypothesis" nm:name : tactic => do
@@ -253,19 +226,22 @@ example : 1 + 2 = 2 + 1 := by
   exact (h 1 2)
 ```
 
-# Making progress on a proof state
+# Implementing the 'apply' Tactic
 
 We typically make progress on a proof in Lean through *tactics*. These have the effect of replacing the current proof state with another, in a way that preserves provability (i.e., if the new set of goals is solvable, then so is the old one).
 
 The converse is not true - it is possible to start from a solvable tactic state and go to an unsolvable one, for example by clearing an essential hypothesis or using backwards reasoning on the goal.
 
-# Creating a tactic for backwards reasoning
-
 So far, we have written tactics that work on the list of active goals or add hypotheses to the local context. To better understand how tactics manipulate the proof state, let's write a simplified version of the `apply` tactic - the tactic that is routinely used in Lean for backwards reasoning, i.e., reasoning backwards from the target.
 
-For example, suppose the goal is to prove that `2 ^ 3` is not a prime number. The library contains the result `Nat.Prime.not_prime_pow`, which says that if `x` and `n` are natural numbers and `2 ≤ n`, then `x ^ n` is not a prime number.
+## An Example
+For example, suppose the goal is to prove that `2 ^ 3` is not a prime number.
 
-A mathematician would say "to show that `2 ^ 3` is not prime, it is sufficient to show that `2 ≤ 3`, by the result `Nat.Prime.not_prime_pow`." (except maybe for the last bit). The `apply` tactic is a way to formally mirror this style of reasoning in Lean.
+And suppose we have a theorem called `Nat.Prime.not_prime_pow`, which says that if `x` and `n` are natural numbers and `2 ≤ n`, then `x ^ n` is not a prime number.
+
+A mathematician would say "to show that `2 ^ 3` is not prime, it is sufficient to show that `2 ≤ 3`, by the result `Nat.Prime.not_prime_pow`." (except maybe for the last bit).
+
+A Lean coder would say `apply Nat.Prime.not_prime_pow`.
 
 ```lean AGH
 #check Nat.Prime.not_prime_pow
@@ -276,16 +252,70 @@ example : ¬ Nat.Prime (2 ^ 3) := by
   decide
 ```
 
-We'll start with the scenario where we have a goal `Q` and a local hypothesis of type `P → Q` and try to set the goal to `P` by backwards reasoning.
+## Implementation
 
-Our rough strategy is going to be to:
-- Check whether the hypothesis is an implication, i.e., of the form `P → Q`
+We'll start with the scenario where we have a goal `Q` and a local hypothesis of type `P → Q`.
+
+```
+h: P → Q
+======
+⊢ Q
+```
+
+After calling, `apply`, we want the goal to be `P`.  (Because, indeed, it is sufficient to prove `P`.)
+
+```
+h: P → Q
+======
+⊢ P
+```
+
+Our high-level strategy is going to be to:
+- Check whether the hypothesis `h` is an implication, i.e., of the form `P → Q`
+```
+h: P → Q -- this is an implication
+======
+⊢ Q
+```
 - Check whether the conclusion of the hypothesis `h` matches the type of the current goal
+```
+h: P → Q -- the conclusion of the hypothesis is Q
+======
+⊢ Q -- the type of the current goal is Q
+```
 - Create a new goal `p` of type `P`
-- Assign the value `h p` to the current goal (remember `h` is of form `P → Q`, so `h p` is of form `Q`)
-- Set `p` as the main goal
+```
+h: P → Q
+======
+⊢ P -- we create a new goal
+⊢ Q
+```
+- We can prove the goal "Q" assuming the hypothesis "P→ Q" (called `h`) and assuming we've already proved the first goal "P" (called `p`).  So, we can prove the goal "Q" by assigning it the value `h p`.
+```
+h: P → Q
+======
+⊢ P
+-- ⊢ Q -- we can prove this goal
+```
+- We're done.
+```
+h: P → Q
+======
+⊢ P
+```
 
-Here is what this strategy looks like translated into code (parts of this code are deliberately sub-optimal; we'll see ways of improving it shortly):
+To do this, we'll use a helper function `createGoal'` which unlike our previous `createGoal`, actually returns the new goal.
+
+```lean AGH
+def createGoal' (goalType : Expr) : TacticM Expr :=
+withMainContext do
+  let goal ← mkFreshExprMVar goalType
+  appendGoals [goal.mvarId!]
+  return goal
+```
+
+
+Here is what this full strategy looks like translated into code.  Parts of this code are deliberately sub-optimal; we'll see ways of improving it shortly.
 
 
 ```lean AGH show:=false
@@ -300,16 +330,25 @@ def getHypothesisByFVarId (h : FVarId) : TacticM LocalDecl := withMainContext do
 def getHypothesisByTerm (h : TSyntax `term) :  TacticM LocalDecl := withMainContext do
   let fvarId ← getFVarId h
   getHypothesisByFVarId fvarId
+
+def getGoalType : TacticM Expr := do
+  return ← getMainTarget
 ```
+
+
+
+And here is the tactic:
 
 ```lean AGH
 elab "apply_hypothesis" h:term : tactic =>
 withMainContext do
+
   -- ensure that the hypothesis is an implication
   let hyp ← getHypothesisByTerm h
   guard hyp.type.isArrow
 
-  -- extract the implication's antecedent & consequent
+  -- extract implication's antecedent & consequent
+  -- or throw error if the hypothesis type is not a .forall
   let .forallE _ P Q _ := hyp.type | unreachable!
 
   -- ensure that the conclusion of `h` matches the target
@@ -318,13 +357,11 @@ withMainContext do
     does not match the current target."
 
   -- create a new goal of type `P`
-  let newGoal ← mkFreshExprMVar P
+  let newGoal ← createGoal' P
 
   -- close off the current goal with `h newGoal`
-  (← getMainGoal).assign (.app hyp.toExpr newGoal)
+  proveGoal (.app hyp.toExpr newGoal)
 
-  -- set `newGoal` as the main goal
-  replaceMainGoal [newGoal.mvarId!]
 
 example (h : Even 2 → Even 4) : Even 4 := by
   apply_hypothesis h -- the goal is now `Even 2`
@@ -357,14 +394,12 @@ withMainContext do
     throwError m!"The type of the conclusion of {h}
     does not match the current target."
 
-  -- create a new goal of type `P`
-  let newGoal ← mkFreshExprMVar P
+   -- create a new goal of type `P`
+  let newGoal ← createGoal' P
 
-  -- assign the value `h newGoal` to the current goal
-  (← getMainGoal).assign (.app hyp.toExpr newGoal)
+  -- close off the current goal with `h newGoal`
+  proveGoal (.app hyp.toExpr newGoal)
 
-  -- set `newGoal` as the main goal
-  replaceMainGoal [newGoal.mvarId!]
 ```
 Now the example works as intended.
 ```lean AGH
@@ -372,51 +407,111 @@ example (h : Even 2 → Even 4) : Even (2 * 2) := by
   apply_hypothesis_defeq h -- the goal is now `Even 2`
   rw [even_iff_two_dvd]
 ```
-# Unification
+# Implementing the 'apply' Tactic via Unification
 
 As mentioned before, the function `isDefEq` does more than just checking for definitional equality - it also handles the *unification* (roughly, filling in holes) of *expressions containing meta-variables* (roughly, expressions with holes).
 
-For example, consider the two expressions `(_ * 37)` and `(71 * _)`, where the underscores indicate "holes" in the expressions. While these expressions are not equal by `==`, they are by `isDefEq`, since they can be made equal by choosing the values for the holes appropriately (so that they both become `71 * 37`). This is the idea behind *unification*, and the `isDefEq` function tries to fill in the holes as much as possible to make the two expressions match up.
+For example, consider the two expressions `(7 * _)` and `(_ * 3)`, where the underscores indicate "holes" in the expressions. While these expressions are not equal by `==`, they are by `isDefEq`, since they can be made equal by choosing the values for the holes appropriately (so that they both become `7 * 3`). This is the idea behind *unification*, and the `isDefEq` function tries to fill in the holes as much as possible to make the two expressions match up.
 
-The word *meta-variable* was used earlier in a different sense - to refer to a goal in the tactic. However, the two senses of the word are essentially the same - a goal can be thought of as a hole for a proof of the appropriate type.
+```lean AGH
+elab "try_to_unify" a:term "and" b:term : tactic => do
+  let a ← Term.elabTermAndSynthesize a none
+  let b ← Term.elabTermAndSynthesize b none
+
+  -- use isDefEq to compare expressions
+  let aEqB ← isDefEq a b
+
+  --... but the expressions still aren't exactly equal
+  let aEqB :=  a == b
+  logInfo m!"It is {aEqB} that expressions a and b are exactly equal
+   (according to ==)."
+
+  -- use instantiateMVars to find out how isDefEq filled the holes
+  -- and fill them accordingly
+  let a ← instantiateMVars a
+  let b ← instantiateMVars a
+  let aEqB :=  a == b
+  logInfo m!"It is {aEqB} that expressions a and b are exactly equal,
+   after using unification to fill holes."
+
+  -- show vars after using unification to fill hole
+  logInfo m!"This is a after filling holes: {a}"
+  logInfo m!"This is b after filling holes: {b}"
+example : True := by
+  try_to_unify (_+7) and (3+_)
+  simp
+```
+
+
+The word *meta-variable* was used earlier to refer to a _goal_ in the tactic, and here is used to refer to a _hole_ in an expression. However, the two senses of the word are essentially the same — a goal can be thought of as a hole for a proof of the appropriate type.
 
 We can implement the `apply_hypothesis` using a strategy involving unification:
-- Suppose the current goal is `Q`
+- We start with a hypothesis `h` of  type H, and a goal of type `Q`.
+```
+h: H
+======
+⊢ Q
+```
 - Create a meta-variable `?P` for the type of the new goal
-- Check whether the type of the hypothesis unifies with the expression `?P → Q`
-- If the unification succeeds and the meta-variable `?P` is assigned the value `P`, create a meta-variable `p` of type `P` for the new goal
-- Assign the value `h p` to the current goal
-- Set `p` as the main goal
-
-With this approach, we no longer need to check if the hypothesis is an implication and explicitly extracting its antecedent and consequent.
+```
+h: H
+======
+⊢ ?P
+⊢ Q
+```
+- Check whether the type of the hypothesis unifies with the expression `?P → Q` (which really means `anything → Q`).
+```
+h: H -- does this take the form (something → Q)?
+======
+⊢ ?P
+⊢ Q
+```
+- If the unification succeeds and the meta-variable `?P` is assigned the value `P`, create a meta-variable of type `P` for the new goal
+```
+h: P → Q
+======
+⊢ P -- it suffices to prove "P"
+⊢ Q
+```
+- Assign the value `h p` to the goal of type "Q"
+```
+h: P → Q
+======
+⊢ P
+-- ⊢ Q -- we've proven this
+```
+- We're done.
+```
+h: P → Q
+======
+⊢ P
+```
+With this approach, we no longer need to check if the hypothesis is an implication and explicitly extract its antecedent and consequent.
 
 ```lean AGH
 
-elab "apply_hypothesis_unif" h:term : tactic => withMainContext do
+elab "apply_hypothesis_unif" h:term : tactic =>
+withMainContext do
   -- get the hypothesis
   let hyp ← getHypothesisByTerm h
 
-  -- try to unify hypothesis with `newTarget → currentTarget`
-  let currentTarget ← getMainTarget
-  let newTarget ← mkFreshExprMVar none
-  unless ← isDefEq hyp.type (← mkArrow newTarget currentTarget) do
+  -- call the current goal Q
+  let Q ← getGoalType
+
+  -- try to unify hypothesis with `P? → Q`
+  let P? ← mkFreshExprMVar none
+  unless ← isDefEq hyp.type (← mkArrow P? Q) do
     throwError m!"The hypothesis is expected to be an implication
       with conclusion matching the current goal."
 
-  -- fill in holes in `newTarget`
-  let newTarget ← instantiateMVars newTarget
+  -- fill in holes in `P` with what made it unify with `P?`
+  let P ← instantiateMVars P?
 
-  -- create a new goal of type `newTarget`
-  let newGoal ← mkFreshExprMVar newTarget
+  -- create a new goal of type `P`
+  let newGoal ← createGoal' P
 
-  -- logging information about the type of the new goal
-  logInfo m!"The new target was updated from {currentTarget} to {newTarget}."
-
-  -- assign the value `h newGoal` to the current goal
-  (← getMainGoal).assign (.app hyp.toExpr newGoal)
-
-  -- set `newGoal` as the main goal
-  replaceMainGoal [newGoal.mvarId!]
+  -- close off the current goal with `h newGoal`
+  proveGoal (.app hyp.toExpr newGoal)
 ```
 
 And the tactic works the same as before.
@@ -426,11 +521,12 @@ example (h : Even 2 → Even 4) : Even (2 * 2) := by
   rw [even_iff_two_dvd]
 ```
 
-# A more general `apply` tactic
+# Generalizing the 'apply' Tactic
 
-To finish off this chapter, we'll generalize our `apply_hypothesis` tactic to scenarios where the type of the argument is not just a single implication.
+To finish off this chapter, we'll generalize our `apply_hypothesis` tactic to scenarios where the type of the argument is not just a single implication.  (The [Lean 4 Metaprogramming Book](https://leanprover-community.github.io/lean4-metaprogramming-book/main/04_metam.html?highlight=apply#deconstructing-expressions) goes through this example in detail.)
 
 For example, suppose we have a target like `¬Nat.Prime (2 * 3)` that we want to prove by backwards reasoning using `Nat.not_prime_mul` (shown below), which says that the product of two numbers is not prime when those numbers are both not equal to 1.
+
 
 ```lean AGH
 #check Nat.not_prime_mul
@@ -440,6 +536,7 @@ For example, suppose we have a target like `¬Nat.Prime (2 * 3)` that we want to
 
 Lean contains utilities for taking expressions of the form `P₁ → (P₂ → ... → Pₖ → (... → Q))` and extracting the hypotheses `#[P₁, P₂, ..., Pₖ, ...]` along with the conclusion `Q` (which go under the fanciful name of "telescopes"). These turn out to be exactly what we need to implement a version of the `apply` tactic that does what we want.
 
+
 Here is our rough strategy for implementing the tactic:
 - Infer the type of the hypothesis being applied
 - Using a telescope, obtain the list of meta-variables `#[p₁, p₂, ..., pₖ, ...]` for the conditions along with the conclusion `Q`
@@ -447,23 +544,30 @@ Here is our rough strategy for implementing the tactic:
 - Assign the value `h p₁ p₂ ... pₖ ...` to the current goal, where `h` is the hypothesis being applied
 - Make the hypotheses `#[P₁, P₂, ..., Pₖ, ...]` the new targets
 
+
+
 ```lean AGH
 elab "apply_to_target" h:term : tactic => withMainContext do
-  -- the hypothesis being applied (in the form of an expression)
-  let hyp ← elabTerm h none
-  -- infer the type of the hypothesis being applied
-  let t ← inferType hyp
-  -- obtain the conditions and the conclusion using a telescope
-  let (conditions, _, conclusion) ← forallMetaTelescope t
-  -- attempt to unify the conclusion with the main target
-  unless ← isDefEq conclusion (← getMainTarget) do
-    throwError m!"The conclusion of the hypothesis {h} does not match with the current target."
-  -- Update the conditions with the values determined by unification
+  -- Get the hypothesis being applied
+  let hypTerm ← elabTerm h none
+  let hypType ← inferType hypTerm
+
+  -- Obtain conditions and the conclusion using a telescope
+  let (conditions, _, conclusion) ← forallMetaTelescope hypType
+
+  -- Attempt to unify the conclusion with the main target
+  unless ← isDefEq conclusion (← getGoalType) do
+    throwError m!"The conclusion of the hypothesis {h}
+    does not match with the current target."
+
+  -- Fill holes in conditions via unification
   let conditions ← conditions.mapM instantiateMVars
-  -- assign the conclusion to the current goal
-  (← getMainGoal).assign <| mkAppN hyp conditions
-  -- set the hypotheses as the new goals
-  replaceMainGoal <| conditions.toList.map Expr.mvarId!
+
+  -- Set the conditions as the new goals
+  appendGoals (conditions.toList.map Expr.mvarId!)
+
+  -- Assign the conclusion to the current goal
+  proveGoal (mkAppN hypTerm conditions)
 
 example : ¬ Nat.Prime (2 * 3) := by
   apply_to_target Nat.not_prime_mul
