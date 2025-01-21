@@ -1,4 +1,4 @@
-import Verso.Genre.Blog
+import VersoBlog
 import Walkthrough
 
 open Verso Genre Blog Site Syntax
