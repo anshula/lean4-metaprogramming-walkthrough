@@ -155,7 +155,7 @@ macro "contrapos" : tactic =>
 
 We can test it out.
 ```lean readingAndChangingTheGoal
-example : P → True := by
+example {P : Prop} : P → True := by
   contrapos
   simp
 ```
