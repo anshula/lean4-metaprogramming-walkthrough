@@ -1,5 +1,5 @@
 import Mathlib.Data.Real.Irrational
-import Verso.Genre.Blog
+import VersoBlog
 open Verso Genre Blog
 
 #doc (Page) "Introduction" =>

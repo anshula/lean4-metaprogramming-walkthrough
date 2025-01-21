@@ -4,8 +4,8 @@ open Lake DSL
 package «LeanMetaprogrammingWalkthrough» where
   -- add package configuration options here
 
-require verso from git "https://github.com/0art0/verso" @ "main"
-require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "master"
+require verso from git "https://github.com/leanprover/verso" @ "v4.15.0"
+require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "v4.15.0"
 
 lean_lib Walkthrough where
   srcDir := "website"
