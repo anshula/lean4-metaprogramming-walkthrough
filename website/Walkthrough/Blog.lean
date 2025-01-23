@@ -1,4 +1,4 @@
-import Verso.Genre.Blog
+import VersoBlog
 open Verso Genre Blog
 
 #doc (Page) "A Verso Blog" =>

@@ -1,4 +1,4 @@
-import Verso.Genre.Blog
+import VersoBlog
 import Mathlib.Tactic
 open Verso Genre Blog
 
@@ -155,7 +155,7 @@ macro "contrapos" : tactic =>
 
 We can test it out.
 ```lean readingAndChangingTheGoal
-example : P → True := by
+example {P : Prop} : P → True := by
   contrapos
   simp
 ```

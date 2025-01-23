@@ -1,4 +1,4 @@
-import Verso.Genre.Blog
+import VersoBlog
 import Mathlib.Tactic
 open Verso Genre Blog
 
