@@ -1,4 +1,4 @@
-import Verso.Genre.Blog
+import VersoBlog
 import Mathlib.Tactic
 open Verso Genre Blog
 
@@ -101,7 +101,7 @@ elab "assump" : tactic => do
   let goal_decl ← getGoalDecl
   for hyp_decl in ← getHypotheses do
     if ← isDefEq hyp_decl.type goal_decl.type then
-      closeMainGoal hyp_decl.toExpr
+      closeMainGoal `assump hyp_decl.toExpr
 ```
 
 We find our function closes the goal when the conclusion is in the hypothesis, and does nothing if not.  Just as expected!
@@ -169,7 +169,7 @@ elab "assump'" : tactic => do
   -- check if any of the hypotheses matches the goal.
   for hyp_decl in ← getHypotheses do
     if ← isDefEq hyp_decl.type goal_decl.type then
-      closeMainGoal hyp_decl.toExpr
+      closeMainGoal `assump' hyp_decl.toExpr
       return
 
   -- if no hypothesis matched, this tactic fails.
@@ -207,7 +207,7 @@ elab "assump''" : tactic => do
 
    -- close the goal, or fail if no hypothesis matched
   match matching_hyp_decl with
-  | some hyp_decl => closeMainGoal hyp_decl.toExpr
+  | some hyp_decl => closeMainGoal `assump'' hyp_decl.toExpr
   | none => throwError "No matching assumptions."
 ```
 
