@@ -1,6 +1,24 @@
 # lean4-metaprogramming-walkthrough
 This is a hands-on, project-based tutorial on metaprogramming (or equivalently, writing tactics to help prove math theorems) in Lean 4.  
 
+# For learners
+
+Switch to the `_out/walkthroughsite` directory with the command
+
+```
+cd _out/walkthroughsite
+```
+
+and start a Python web server by running
+
+```
+python3 -m http.server 8800
+```
+
+The tutorial should now be available to view on the URL [http://localhost:8800][1].
+
+# For contributors
+
 ## Initial set-up
 
 To set up the repository after cloning, run
