@@ -2,7 +2,6 @@
 .Ulysses-Settings.plist
 .DS_Store
 .lake
-/_out
 /build
 /lakefile.olean
 /lake-packages/*

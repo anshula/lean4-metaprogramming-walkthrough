@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Reading and Changing the Hypotheses — Hands-on Lean 4 Tactic Writing</title><style>
+
+
+.hl.lean {
+  white-space: pre;
+  font-weight: normal;
+  font-style: normal;
+}
+
+.hl.lean .keyword {
+  font-weight : bold;
+}
+
+.hl.lean .var {
+  font-style: italic;
+  position: relative;
+}
+
+.hover-container {
+  width: 0;
+  height: 0;
+  position: relative;
+  display: inline;
+}
+
+.hl.lean a {
+  color: inherit;
+  text-decoration: currentcolor underline dotted;
+}
+
+.hl.lean a:hover {
+  text-decoration: currentcolor underline solid;
+}
+
+.hl.lean .hover-info {
+  white-space: normal;
+}
+
+.hl.lean .token .hover-info {
+  display: none;
+  position: absolute;
+  background-color: #e5e5e5;
+  border: 1px solid black;
+  padding: 0.5rem;
+  z-index: 300;
+  font-size: inherit;
+}
+
+.hl.lean .hover-info.messages {
+  max-height: 10rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  padding: 0 0.5rem 0 0;
+  display: block;
+}
+
+.hl.lean .hover-info code {
+  white-space: pre-wrap;
+}
+
+.hl.lean .hover-info.messages > code {
+  padding: 0.5rem;
+  display: block;
+  width: fit-content;
+}
+
+.hl.lean .hover-info.messages > code:only-child {
+  margin: 0;
+}
+
+.hl.lean .hover-info.messages > code {
+  margin: 0.1rem;
+}
+
+.hl.lean .hover-info.messages > code:not(:first-child) {
+  margin-top: 0rem;
+}
+
+/*
+@media (hover: hover) {
+  .hl.lean .has-info:hover > .hover-container > .hover-info:not(.tactic *),
+  .hl.lean .tactic:has(> .tactic-toggle:checked) .has-info:hover > .hover-container > .hover-info,
+  .hl.lean .token:hover > .hover-container > .hover-info:not(.has-info *):not(.tactic *),
+  .hl.lean .tactic:has(> .tactic-toggle:checked) .token:hover > .hover-container > .hover-info:not(.has-info *) {
+    display: inline-block;
+    position: absolute;
+    top: 1rem;
+    font-weight: normal;
+    font-style: normal;
+    width: min-content;
+  }
+}
+*/
+
+.hl.lean.block {
+  display: block;
+}
+
+.hl.lean.inline {
+  display: inline;
+  white-space: pre-wrap;
+}
+
+.hl.lean .token {
+  transition: all 0.25s; /* Slight fade for highlights */
+}
+
+@media (hover: hover) {
+  .hl.lean .token.binding-hl, .hl.lean .literal.string:hover, .hl.lean .token.typed:hover {
+    background-color: #eee;
+    border-radius: 2px;
+    transition: none;
+  }
+}
+
+
+.hl.lean .has-info {
+  text-decoration-style: wavy;
+  text-decoration-line: underline;
+  text-decoration-thickness: from-font;
+}
+
+.hl.lean .has-info .hover-info {
+  display: none;
+  position: absolute;
+  transform: translate(0.25rem, 0.3rem);
+  border: 1px solid black;
+  padding: 0.5rem;
+  z-index: 400;
+  text-align: left;
+}
+
+.hl.lean .has-info.error {
+  text-decoration-color: red;
+}
+
+@media (hover: hover) {
+  .hl.lean .has-info.error:hover {
+    background-color: #ffb3b3;
+  }
+}
+
+.hl.lean .hover-info.messages > code.error {
+  background-color: #e5e5e5;
+  border-left: 0.2rem solid #ffb3b3;
+}
+
+.tippy-box[data-theme~='error'] .hl.lean .hover-info.messages > code.error {
+  background: none;
+  border: none;
+}
+
+.error pre {
+    color: red;
+}
+
+.hl.lean .has-info.warning {
+  text-decoration-color: var(--verso-warning-color);
+}
+
+@media (hover: hover) {
+  .hl.lean .has-info.warning:hover {
+    background-color:var(--verso-warning-color);
+  }
+}
+
+.hl.lean .hover-info.messages > code.warning {
+  background-color: var(--verso-warning-color);
+}
+
+.hl.lean .hover-info.messages > code.error {
+  background-color: #e5e5e5;
+  border-left: 0.2rem solid var(--verso-warning-color);
+}
+
+.tippy-box[data-theme~='warning'] .hl.lean .hover-info.messages > code.warning {
+  background: none;
+  border: none;
+}
+
+
+.hl.lean .has-info.info {
+  text-decoration-color: blue;
+}
+
+@media (hover: hover) {
+  .hl.lean .has-info.info:hover {
+    background-color: #4777ff;
+  }
+}
+
+
+.hl.lean .hover-info.messages > code.info {
+  background-color: #e5e5e5;
+  border-left: 0.2rem solid #4777ff;
+}
+
+.tippy-box[data-theme~='info'] .hl.lean .hover-info.messages > code.info {
+  background: none;
+  border: none;
+}
+
+.hl.lean div.docstring {
+  font-family: sans-serif;
+  white-space: normal;
+  max-width: 40rem;
+  width: max-content;
+}
+
+.hl.lean div.docstring > :last-child {
+  margin-bottom: 0;
+}
+
+.hl.lean div.docstring > :first-child {
+  margin-top: 0;
+}
+
+.hl.lean .hover-info .sep {
+  display: block;
+  width: auto;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0;
+  height: 1px;
+  border-top: 1px solid #ccc;
+}
+
+.hl.lean code {
+  font-family: monospace;
+}
+
+.hl.lean .tactic-state {
+  display: none;
+  position: relative;
+  left: 2rem;
+  width: fit-content;
+  border: 1px solid #888888;
+  border-radius: 0.1rem;
+  padding: 0.5rem;
+  font-family: sans-serif;
+  background-color: #ffffff;
+  z-index: 200;
+}
+
+.hl.lean.popup .tactic-state {
+  position: static;
+  display: block;
+  width: auto;
+  border: none;
+  padding: 0.5rem;
+  font-family: sans-serif;
+  background-color: #ffffff;
+}
+
+
+.hl.lean .tactic {
+  position: relative;
+}
+
+.hl.lean .tactic-toggle:checked ~ .tactic-state {
+  display: block;
+}
+
+/*
+@media (hover: hover) {
+  .hl.lean .tactic:hover > .tactic-toggle:not(:checked) ~ .tactic-state {
+    display: block;
+    position: absolute;
+    left: 0;
+    transform: translate(0.25rem, 0);
+    z-index: 250;
+  }
+}
+*/
+
+.hl.lean .tactic > label {
+  position: relative;
+  transition: all 0.5s;
+}
+
+@media (hover: hover) {
+  .hl.lean .tactic > label:hover {
+    border-bottom: 1px dotted #bbbbbb;
+  }
+}
+
+.hl.lean .tactic-toggle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  z-index: -10;
+}
+
+.hl.lean .tactic > label::after {
+  content: "";
+  border: 1px solid #bbbbbb;
+  border-radius: 1rem;
+  height: 0.25rem;
+  vertical-align: middle;
+  width: 0.6rem;
+  margin-left: 0.1rem;
+  margin-right: 0.1rem;
+  display: inline-block;
+  transition: all 0.5s;
+}
+
+/*
+@media (hover: hover) {
+  .hl.lean .tactic > label:hover::after {
+    border: 1px solid #aaaaaa;
+    background-color: #aaaaaa;
+    transition: all 0.5s;
+  }
+}
+*/
+
+.hl.lean .tactic > label:has(+ .tactic-toggle:checked)::after {
+  border: 1px solid #999999;
+  background-color: #999999;
+  transition: all 0.5s;
+}
+
+.hl.lean .tactic-state .goal + .goal {
+  margin-top: 1.5rem;
+}
+
+.hl.lean .tactic-state summary {
+  margin-left: -0.5rem;
+}
+
+.hl.lean .tactic-state details {
+  padding-left: 0.5rem;
+}
+
+.hl.lean .case-label {
+  display: block;
+  position: relative;
+}
+
+.hl.lean .case-label input[type="checkbox"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  z-index: -10;
+}
+
+.hl.lean .case-label:has(input[type="checkbox"])::before {
+  width: 1rem;
+  height: 1rem;
+  display: inline-block;
+  background-color: black;
+  content: ' ';
+  transition: ease 0.2s;
+  margin-right: 0.7rem;
+  clip-path: polygon(100% 0, 0 0, 50% 100%);
+  width: 0.6rem;
+  height: 0.6rem;
+}
+
+.hl.lean .case-label:has(input[type="checkbox"]:not(:checked))::before {
+  transform: rotate(-90deg);
+}
+
+.hl.lean .case-label:has(input[type="checkbox"]) {
+
+}
+
+.hl.lean .case-label:has(input[type="checkbox"]:checked) {
+
+}
+
+
+.hl.lean .tactic-state .labeled-case > :not(:first-child) {
+  max-height: 0px;
+  display: block;
+  overflow: hidden;
+  transition: max-height 0.1s ease-in;
+  margin-left: 0.5rem;
+  margin-top: 0.1rem;
+}
+
+.hl.lean .labeled-case:has(.case-label input[type="checkbox"]:checked) > :not(:first-child) {
+  max-height: 100%;
+}
+
+
+.hl.lean .tactic-state .goal-name::before {
+  font-style: normal;
+  content: "case ";
+}
+
+.hl.lean .tactic-state .goal-name {
+  font-style: italic;
+  font-family: monospace;
+}
+
+.hl.lean .tactic-state .hypotheses {
+  display: table;
+}
+
+.hl.lean .tactic-state .hypothesis {
+  display: table-row;
+}
+
+.hl.lean .tactic-state .hypothesis > * {
+  display: table-cell;
+}
+
+
+.hl.lean .tactic-state .hypotheses .colon {
+  text-align: center;
+  min-width: 1rem;
+}
+
+.hl.lean .tactic-state .hypotheses .name {
+  text-align: right;
+}
+
+.hl.lean .tactic-state .hypotheses .name,
+.hl.lean .tactic-state .hypotheses .type,
+.hl.lean .tactic-state .conclusion .type {
+  font-family: monospace;
+}
+
+.tippy-box[data-theme~='lean'] {
+  background-color: #e5e5e5;
+  color: black;
+  border: 1px solid black;
+}
+.tippy-box[data-theme~='lean'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: #e5e5e5;
+}
+.tippy-box[data-theme~='lean'][data-placement^='bottom'] > .tippy-arrow::before {
+  border-bottom-color: #e5e5e5;
+}
+.tippy-box[data-theme~='lean'][data-placement^='left'] > .tippy-arrow::before {
+  border-left-color: #e5e5e5;
+}
+.tippy-box[data-theme~='lean'][data-placement^='right'] > .tippy-arrow::before {
+  border-right-color: #e5e5e5;
+}
+
+.tippy-box[data-theme~='message'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: #e5e5e5;
+  border-width: 11px 11px 0;
+}
+.tippy-box[data-theme~='message'][data-placement^='top'] > .tippy-arrow::after {
+  bottom: -11px;
+  border-width: 11px 11px 0;
+}
+.tippy-box[data-theme~='message'][data-placement^='bottom'] > .tippy-arrow::before {
+  border-width: 0 11px 11px;
+}
+.tippy-box[data-theme~='message'][data-placement^='bottom'] > .tippy-arrow::after {
+  top: -11px;
+  border-width: 0 11px 11px;
+}
+.tippy-box[data-theme~='message'][data-placement^='left'] > .tippy-arrow::before {
+  border-left-color: #e5e5e5;
+  border-width: 11px 0 11px 11px;
+}
+.tippy-box[data-theme~='message'][data-placement^='left'] > .tippy-arrow::after {
+  right: -11px;
+  border-width: 11px 0 11px 11px;
+}
+
+.tippy-box[data-theme~='message'][data-placement^='right'] > .tippy-arrow::before {
+  border-right-color: #e5e5e5;
+  border-width: 11px 11px 11px 0;
+}
+.tippy-box[data-theme~='message'][data-placement^='right'] > .tippy-arrow::after {
+  left: -11px;
+  border-width: 11px 11px 11px 0;
+}
+
+
+
+.tippy-box[data-theme~='warning'] {
+  background-color: #e5e5e5;
+  color: black;
+  border: 3px solid var(--verso-warning-color);
+}
+
+.tippy-box[data-theme~='error'] {
+  background-color: #e5e5e5;
+  color: black;
+  border: 3px solid #f7a7af;
+}
+
+.tippy-box[data-theme~='info'] {
+  background-color: #e5e5e5;
+  color: black;
+  border: 3px solid #99b3c2;
+}
+
+
+
+.tippy-box[data-theme~='tactic'] {
+  background-color: white;
+  color: black;
+  border: 1px solid black;
+}
+.tippy-box[data-theme~='tactic'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: white;
+}
+.tippy-box[data-theme~='tactic'][data-placement^='bottom'] > .tippy-arrow::before {
+  border-bottom-color: white;
+}
+.tippy-box[data-theme~='tactic'][data-placement^='left'] > .tippy-arrow::before {
+  border-left-color: white;
+}
+.tippy-box[data-theme~='tactic'][data-placement^='right'] > .tippy-arrow::before {
+  border-right-color: white;
+}
+
+
+</style>
+<script>
+      
+
+window.onload = () => {
+
+    // Don't show hovers inside of closed tactic states
+    function blockedByTactic(elem) {
+      let parent = elem.parentNode;
+      while (parent && "classList" in parent) {
+        if (parent.classList.contains("tactic")) {
+          const toggle = parent.querySelector("input.tactic-toggle");
+          if (toggle) {
+            return !toggle.checked;
+          }
+        }
+        parent = parent.parentNode;
+      }
+      return false;
+    }
+
+    function blockedByTippy(elem) {
+      // Don't show a new hover until the old ones are all closed.
+      // Scoped to the nearest "top-level block" to avoid being O(n) in the size of the document.
+      var block = elem;
+      const topLevel = new Set(["section", "body", "html", "nav", "header"]);
+      while (block.parentNode && !topLevel.has(block.parentNode.nodeName.toLowerCase())) {
+        block = block.parentNode;
+      }
+      for (const child of block.querySelectorAll(".token, .has-info")) {
+        if (child._tippy && child._tippy.state.isVisible) { return true };
+      }
+      return false;
+    }
+
+    for (const c of document.querySelectorAll(".hl.lean .token")) {
+        if (c.dataset.binding != "") {
+            c.addEventListener("mouseover", (event) => {
+                if (blockedByTactic(c)) {return;}
+                const context = c.closest(".hl.lean").dataset.leanContext;
+                for (const example of document.querySelectorAll(".hl.lean")) {
+                    if (example.dataset.leanContext == context) {
+                        for (const tok of example.querySelectorAll(".token")) {
+                            if (c.dataset.binding == tok.dataset.binding) {
+                                tok.classList.add("binding-hl");
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        c.addEventListener("mouseout", (event) => {
+            for (const tok of document.querySelectorAll(".hl.lean .token")) {
+                tok.classList.remove("binding-hl");
+            }
+        });
+    }
+    /* Render docstrings */
+    if ('undefined' !== typeof marked) {
+        for (const d of document.querySelectorAll("code.docstring, pre.docstring")) {
+            const str = d.innerText;
+            const html = marked.parse(str);
+            const rendered = document.createElement("div");
+            rendered.classList.add("docstring");
+            rendered.innerHTML = html;
+            d.parentNode.replaceChild(rendered, d);
+        }
+    }
+    // Add hovers
+    let siteRoot = typeof __versoSiteRoot !== 'undefined' ? __versoSiteRoot : "/";
+    let docsJson = siteRoot + "-verso-docs.json";
+    fetch(docsJson).then((resp) => resp.json()).then((versoDocData) => {
+
+      const defaultTippyProps = {
+        /* DEBUG -- remove the space: * /
+        onHide(any) { return false; },
+        trigger: "click",
+        // */
+        theme: "lean",
+        maxWidth: "none",
+        appendTo: () => document.body,
+        interactive: true,
+        delay: [100, null],
+        ignoreAttributes: true,
+        onShow(inst) {
+          if (inst.reference.querySelector(".hover-info") || "versoHover" in inst.reference.dataset) {
+            if (blockedByTactic(inst.reference)) { return false };
+            if (blockedByTippy(inst.reference)) { return false; }
+          } else { // Nothing to show here!
+            return false;
+          }
+        },
+        content (tgt) {
+          const content = document.createElement("span");
+          content.className = "hl lean";
+          content.style.display = "block";
+          content.style.maxHeight = "300px";
+          content.style.overflowY = "auto";
+          content.style.overflowX = "hidden";
+          const hoverId = tgt.dataset.versoHover;
+          const hoverInfo = tgt.querySelector(".hover-info");
+          if (hoverId) { // Docstrings from the table
+            // TODO stop doing an implicit conversion from string to number here
+            let data = versoDocData[hoverId];
+            if (data) {
+              const info = document.createElement("span");
+              info.className = "hover-info";
+              info.style.display = "block";
+              info.innerHTML = data;
+              content.appendChild(info);
+              /* Render docstrings - TODO server-side */
+              if ('undefined' !== typeof marked) {
+                  for (const d of content.querySelectorAll("code.docstring, pre.docstring")) {
+                      const str = d.innerText;
+                      const html = marked.parse(str);
+                      const rendered = document.createElement("div");
+                      rendered.classList.add("docstring");
+                      rendered.innerHTML = html;
+                      d.parentNode.replaceChild(rendered, d);
+                  }
+              }
+            } else {
+              content.innerHTML = "Failed to load doc ID: " + hoverId;
+            }
+          } else if (hoverInfo) { // The inline info, still used for compiler messages
+            content.appendChild(hoverInfo.cloneNode(true));
+          }
+          return content;
+        }
+      };
+
+      const addTippy = (selector, props) => {
+        tippy(selector, Object.assign({}, defaultTippyProps, props));
+      };
+      addTippy('.hl.lean .const.token, .hl.lean .keyword.token, .hl.lean .literal.token, .hl.lean .option.token, .hl.lean .var.token, .hl.lean .typed.token', {theme: 'lean'});
+      addTippy('.hl.lean .has-info.warning', {theme: 'warning message'});
+      addTippy('.hl.lean .has-info.info', {theme: 'info message'});
+      addTippy('.hl.lean .has-info.error', {theme: 'error message'});
+
+      tippy('.hl.lean .tactic', {
+        allowHtml: true,
+        /* DEBUG -- remove the space: * /
+        onHide(any) { return false; },
+        trigger: "click",
+        // */
+        maxWidth: "none",
+        onShow(inst) {
+          const toggle = inst.reference.querySelector("input.tactic-toggle");
+          if (toggle && toggle.checked) {
+            return false;
+          }
+          if (blockedByTippy(inst.reference)) { return false; }
+        },
+        theme: "tactic",
+        placement: 'bottom-start',
+        content (tgt) {
+          const content = document.createElement("span");
+          const state = tgt.querySelector(".tactic-state").cloneNode(true);
+          state.style.display = "block";
+          content.appendChild(state);
+          content.style.display = "block";
+          content.className = "hl lean popup";
+          return content;
+        }
+      });
+  });
+}
+
+</script>
+    
+<script>
+      
+document.addEventListener("DOMContentLoaded", () => {
+    for (const m of document.querySelectorAll(".math.inline")) {
+        katex.render(m.textContent, m, {throwOnError: false, displayMode: false});
+    }
+    for (const m of document.querySelectorAll(".math.display")) {
+        katex.render(m.textContent, m, {throwOnError: false, displayMode: true});
+    }
+});
+</script>
+    
+<script src="../-verso-js/popper.js"></script>
+    <script src="../-verso-js/tippy.js"></script>
+    <link rel="stylesheet" href="../-verso-css/tippy-border.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js" integrity="sha384-zbcZAIxlvJtNE3Dp5nxLXdXtXyxwOdnILY1TDPVmKFhl4r4nSUG1r8bcFXGVa4Te" crossorigin="anonymous"></script>
+    <link rel="icon" type="image/x-icon" href="../static/img/favicon.ico">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="stylesheet" href="../static/navbar.css">
+    <link rel="stylesheet" href="../static/navbar-colors.css">
+    <script crossorigin="anonymous" src="https://code.jquery.com/jquery-2.2.4.js"></script>
+    <script src="../static/build-nav.js"></script>
+    <script>
+      window.onload=function(){buildNav();}</script>
+    </head>
+  <body>
+    <header>
+      <div class="inner-wrap">
+        <a class="logo" href="../">Hands-on Lean 4 Tactic Writing</a><nav class="top" role="navigation">
+          <ol>
+            <li>
+              <a href="../Introduction">Introduction</a></li>
+            <li>
+              <a href="../Reading-and-Changing-the-Goal">Reading and Changing the Goal</a></li>
+            <li>
+              <a href="../Reading-and-Changing-the-Hypotheses">Reading and Changing the Hypotheses</a></li>
+            <li>
+              <a href="../Comparing-Goals-and-Hypotheses">Comparing Goals and Hypotheses</a></li>
+            <li>
+              <a href="../Adding-Goals-and-Hypotheses">Adding Goals and Hypotheses</a></li>
+            <li>
+              <a href="../Manipulating-Expressions">Manipulating Expressions</a></li>
+            <li>
+              <a href="../Manipulating-Subexpressions">Manipulating Subexpressions</a></li>
+            <li>
+              <a href="../Final-Project-Autogeneralize">Final Project: The Autogeneralize Tactic</a></li>
+            </ol>
+          </nav>
+        </div>
+      </header>
+    <div class="main" role="main">
+      <div class="wrap">
+        <h1>
+          Reading and Changing the Hypotheses</h1>
+        <p>
+          All of the exercises in this section and the next are going to build up to writing an 'assumption' tactic — one that looks at all the hypotheses, and if any matches the goal, successfully proves it using that hypothesis.</p>
+        <section>
+          <h2>
+            Reading All Hypotheses</h2>
+          <p>
+            So now we can read and modify the <em>goal</em> of a theorem.</p>
+          <p>
+            What about the <em>hypotheses</em>?</p>
+          <p>
+            All the hypotheses are stored in the local context, which is retrieved through <code>getLCtx</code>.</p>
+          <p>
+            Some of them are not ones a human would think about when solving a theorem, that is, they are “implementation details” (e.g. the name of the theorem itself) and we skip them.</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.elab-935">elab</span> <span class="literal string token" data-binding="" data-verso-hover="56">"print_hypotheses"</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Parser.Category.tactic" data-verso-hover="2">tactic</span> <span class="unknown token" data-binding="">=&gt;</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-971">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-976">let</span> <span class="keyword token" data-binding="kw-occ-null-980">mut</span> <span class="var token" data-binding="var-_uniq.525" data-verso-hover="57">output</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.MessageData" data-verso-hover="58">MessageData</span> <span class="unknown token" data-binding="">:=</span> <span class="const token" data-binding="const-Lean.MessageData.ofFormat" data-verso-hover="59">.ofFormat</span> <span class="const token" data-binding="const-Std.Format.nil" data-verso-hover="60">.nil</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-1025" data-verso-hover="17">for</span> <span class="var token" data-binding="var-_uniq.234" data-verso-hover="61">ldecl</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doForDecl-1029">in</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.MonadLCtx.getLCtx" data-verso-hover="62">getLCtx</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-1025" data-verso-hover="17">do</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-1057">if</span> <span class="var token" data-binding="var-_uniq.234" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.isImplementationDetail" data-verso-hover="63">isImplementationDetail</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-1057">then</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doContinue-1094" data-verso-hover="64">continue</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-1107">let</span> <span class="var token" data-binding="var-_uniq.530" data-verso-hover="65">hypName</span> <span class="unknown token" data-binding="">:=</span> <span class="var token" data-binding="var-_uniq.234" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.userName" data-verso-hover="66">userName</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-1141">let</span> <span class="var token" data-binding="var-_uniq.534" data-verso-hover="67">hypType</span> <span class="unknown token" data-binding="">:=</span> <span class="var token" data-binding="var-_uniq.234" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.type" data-verso-hover="68">type</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-1171">let</span> <span class="var token" data-binding="var-_uniq.652" data-verso-hover="57">message</span> <span class="unknown token" data-binding="">:=</span> <span class="keyword token" data-binding="kw-occ-Lean.termM!_-1186">m!</span><span class="unknown token" data-binding="">"Name: '{</span><span class="var token" data-binding="var-_uniq.530" data-verso-hover="65">hypName</span><span class="unknown token" data-binding="">}'  Type: '{</span><span class="var token" data-binding="var-_uniq.534" data-verso-hover="67">hypType</span><span class="unknown token" data-binding="">}'\n"</span>
+    <span class="var token" data-binding="var-_uniq.525" data-verso-hover="57">output</span> <span class="unknown token" data-binding="">:=</span> <span class="const token" data-binding="const-Lean.MessageData.compose" data-verso-hover="69">.compose</span> <span class="var token" data-binding="var-_uniq.525" data-verso-hover="57">output</span> <span class="var token" data-binding="var-_uniq.652" data-verso-hover="57">message</span>
+  <span class="const token" data-binding="const-Lean.logInfo" data-verso-hover="10">logInfo</span> <span class="var token" data-binding="var-_uniq.525" data-verso-hover="57">output</span>
+<span class="unknown token" data-binding=""></span></code><p>
+            We can test it out a theorem which has hypotheses that <code>a=2</code> and <code>b=3</code>.</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="has-info warning"><span class="hover-container"><span class="hover-info messages"><code class="message warning">declaration uses 'sorry'</code></span></span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.example-1401">example</span></span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.1642" data-verso-hover="11">a</span> <span class="var token" data-binding="var-_uniq.1644" data-verso-hover="11">b</span> <span class="unknown token" data-binding="">:</span> <span class="unknown token" data-binding="">ℕ</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.1675" data-verso-hover="70">h1</span> <span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.1642" data-verso-hover="11">a</span> <span class="unknown token" data-binding="">=</span> <span class="typed token" data-binding="" data-verso-hover="11">2</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.1702" data-verso-hover="71">h2</span><span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.1644" data-verso-hover="11">b</span> <span class="unknown token" data-binding="">=</span> <span class="typed token" data-binding="" data-verso-hover="11">3</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.1642" data-verso-hover="11">a</span><span class="unknown token" data-binding="">+</span><span class="var token" data-binding="var-_uniq.1644" data-verso-hover="11">b</span><span class="unknown token" data-binding="">=</span><span class="typed token" data-binding="" data-verso-hover="11">5</span> <span class="unknown token" data-binding="">:=</span> <span class="tactic"><label for="tactic-state-3416415672576658872-1457-1459"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-1457" data-verso-hover="5">by</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-3416415672576658872-1457-1459"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1642" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1644" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1675" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1642" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1702" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1644" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.1642" data-verso-hover="11">a</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span><span class="var token" data-binding="var-_uniq.1644" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>5</span></span></span></span></span>
+  <span class="tactic"><label for="tactic-state-3416415672576658872-1462-1478"><span class="has-info warning"><span class="hover-container"><span class="hover-info messages"><code class="message warning">'print_hypotheses' tactic does nothing
+note: this linter can be disabled with `set_option linter.unusedTactic false`</code><code class="message info">Name: 'a'  Type: 'ℕ'
+Name: 'b'  Type: 'ℕ'
+Name: 'h1'  Type: 'a = 2'
+Name: 'h2'  Type: 'b = 3'
+</code></span></span><span class="keyword token" data-binding="kw-occ-tacticPrint_hypotheses-1462">print_hypotheses</span></span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-3416415672576658872-1462-1478"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1642" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1644" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1675" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1642" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1702" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1644" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.1642" data-verso-hover="11">a</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span><span class="var token" data-binding="var-_uniq.1644" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>5</span></span></span></span></span>
+  <span class="tactic"><label for="tactic-state-7-1481-1486"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.tacticSorry-1481" data-verso-hover="42">sorry</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7-1481-1486"><span class="tactic-state">All goals completed! 🐙</span></span>
+<span class="unknown token" data-binding=""></span></code><p>
+            And we get all the relevant hypotheses.</p>
+          </section>
+        <section>
+          <h2>
+            (Failing at) Reading Newly-Added Hypotheses</h2>
+          <p>
+            Our tactic doesn’t seem to work when we add another hypothesis.</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="has-info warning"><span class="hover-container"><span class="hover-info messages"><code class="message warning">declaration uses 'sorry'</code></span></span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.example-1686">example</span></span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span> <span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span> <span class="unknown token" data-binding="">:</span> <span class="unknown token" data-binding="">ℕ</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.1815" data-verso-hover="70">h1</span> <span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span> <span class="unknown token" data-binding="">=</span> <span class="typed token" data-binding="" data-verso-hover="11">2</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.1842" data-verso-hover="71">h2</span><span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span> <span class="unknown token" data-binding="">=</span> <span class="typed token" data-binding="" data-verso-hover="11">3</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="unknown token" data-binding="">+</span><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="unknown token" data-binding="">=</span><span class="typed token" data-binding="" data-verso-hover="11">5</span> <span class="unknown token" data-binding="">:=</span> <span class="tactic"><label for="tactic-state-9450111871387055053-1742-1744"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-1742" data-verso-hover="5">by</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-9450111871387055053-1742-1744"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1815" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1842" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>5</span></span></span></span></span>
+  <span class="tactic"><label for="tactic-state-9450111871387055053-1747-1763"><span class="has-info warning"><span class="hover-container"><span class="hover-info messages"><code class="message info">Name: 'a'  Type: 'ℕ'
+Name: 'b'  Type: 'ℕ'
+Name: 'h1'  Type: 'a = 2'
+Name: 'h2'  Type: 'b = 3'
+</code><code class="message warning">'print_hypotheses' tactic does nothing
+note: this linter can be disabled with `set_option linter.unusedTactic false`</code></span></span><span class="keyword token" data-binding="kw-occ-tacticPrint_hypotheses-1747">print_hypotheses</span></span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-9450111871387055053-1747-1763"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1815" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1842" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>5</span></span></span></span></span> -- prints h1 and h2
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.tacticHave_-1786" data-verso-hover="73">have</span> <span class="var token" data-binding="var-_uniq.1989" data-verso-hover="74">h3</span> <span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="unknown token" data-binding="">-</span><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span> <span class="unknown token" data-binding="">=</span> <span class="typed token" data-binding="" data-verso-hover="11">1</span> <span class="unknown token" data-binding="">:=</span> <span class="tactic"><label for="tactic-state-75777154047541322-1807-1809"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-1807" data-verso-hover="5">by</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-75777154047541322-1807-1809"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1815" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1842" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-HSub.hSub" data-verso-hover="75"> - </span><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>1</span></span></span></span></span> <span class="tactic"><label for="tactic-state-75777154047541322-1810-1811"><span class="unknown token" data-binding="">{</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-75777154047541322-1810-1811"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1815" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1842" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-HSub.hSub" data-verso-hover="75"> - </span><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>1</span></span></span></span></span><span class="tactic"><label for="tactic-state-7-1811-1822"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.rwSeq-1811" data-verso-hover="76">rw</span> <span class="unknown token" data-binding="">[</span><span class="var token" data-binding="var-_uniq.1815" data-verso-hover="70">h1</span><span class="unknown token" data-binding="">,</span> <span class="var token" data-binding="var-_uniq.1842" data-verso-hover="71">h2</span><span class="unknown token" data-binding="">]</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7-1811-1822"><span class="tactic-state">All goals completed! 🐙</span></span><span class="unknown token" data-binding="">}</span>
+  <span class="tactic"><label for="tactic-state-9022882178569359030-1826-1842"><span class="has-info warning"><span class="hover-container"><span class="hover-info messages"><code class="message info">Name: 'a'  Type: 'ℕ'
+Name: 'b'  Type: 'ℕ'
+Name: 'h1'  Type: 'a = 2'
+Name: 'h2'  Type: 'b = 3'
+</code><code class="message warning">'print_hypotheses' tactic does nothing
+note: this linter can be disabled with `set_option linter.unusedTactic false`</code></span></span><span class="keyword token" data-binding="kw-occ-tacticPrint_hypotheses-1826">print_hypotheses</span></span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-9022882178569359030-1826-1842"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1815" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1842" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.1989" data-verso-hover="74">h3</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-HSub.hSub" data-verso-hover="75"> - </span><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>1</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.1782" data-verso-hover="11">a</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span><span class="var token" data-binding="var-_uniq.1784" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>5</span></span></span></span></span> -- still prints only h1 and h2
+  <span class="tactic"><label for="tactic-state-7-1876-1881"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.tacticSorry-1876" data-verso-hover="42">sorry</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7-1876-1881"><span class="tactic-state">All goals completed! 🐙</span></span>
+<span class="unknown token" data-binding=""></span></code><p>
+            Our tactic doesn’t print the newest hypothesis.</p>
+          </section>
+        <section>
+          <h2>
+            (Succeeding at) Reading Newly-Added Hypotheses</h2>
+          <p>
+            The new hypotheses are actually associated to the current goal.</p>
+          <p>
+            So to get it, we need to modify our function to retrieve all hypotheses from the goal, with <code>(← goal.getDecl).lctx</code>.</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.elab-2215">elab</span> <span class="literal string token" data-binding="" data-verso-hover="77">"print_hypotheses'"</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Parser.Category.tactic" data-verso-hover="2">tactic</span> <span class="unknown token" data-binding="">=&gt;</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-2252">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLetArrow-2257">let</span> <span class="var token" data-binding="var-_uniq.2093" data-verso-hover="8">goal</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.getMainGoal" data-verso-hover="9">getMainGoal</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-2284" data-verso-hover="17">for</span> <span class="var token" data-binding="var-_uniq.2374" data-verso-hover="61">ldecl</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doForDecl-2288">in</span> <span class="unknown token" data-binding="">(</span><span class="unknown token" data-binding="">←</span> <span class="var token" data-binding="var-_uniq.2093" data-verso-hover="8">goal</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.MVarId.getDecl" data-verso-hover="78">getDecl</span><span class="unknown token" data-binding="">)</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.MetavarDecl.lctx" data-verso-hover="79">lctx</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-2284" data-verso-hover="17">do</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-2328">if</span> <span class="var token" data-binding="var-_uniq.2374" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.isImplementationDetail" data-verso-hover="63">isImplementationDetail</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-2328">then</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doContinue-2365" data-verso-hover="64">continue</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-2378">let</span> <span class="var token" data-binding="var-_uniq.2658" data-verso-hover="65">hyp_name</span> <span class="unknown token" data-binding="">:=</span> <span class="var token" data-binding="var-_uniq.2374" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.userName" data-verso-hover="66">userName</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-2413">let</span> <span class="var token" data-binding="var-_uniq.2662" data-verso-hover="67">hyp_type</span> <span class="unknown token" data-binding="">:=</span> <span class="var token" data-binding="var-_uniq.2374" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.type" data-verso-hover="68">type</span>
+    <span class="const token" data-binding="const-Lean.logInfo" data-verso-hover="10">logInfo</span> <span class="keyword token" data-binding="kw-occ-Lean.termM!_-2452">m!</span><span class="unknown token" data-binding="">"Name: '{</span><span class="var token" data-binding="var-_uniq.2658" data-verso-hover="65">hyp_name</span><span class="unknown token" data-binding="">}'  Type: '{</span><span class="var token" data-binding="var-_uniq.2662" data-verso-hover="67">hyp_type</span><span class="unknown token" data-binding="">}' "</span>
+<span class="unknown token" data-binding=""></span></code><p>
+            Now when we test it out…</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="has-info warning"><span class="hover-container"><span class="hover-info messages"><code class="message warning">declaration uses 'sorry'</code></span></span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.example-2568">example</span></span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span> <span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span> <span class="unknown token" data-binding="">:</span> <span class="unknown token" data-binding="">ℕ</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.3794" data-verso-hover="70">h1</span> <span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span> <span class="unknown token" data-binding="">=</span> <span class="typed token" data-binding="" data-verso-hover="11">2</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.3821" data-verso-hover="71">h2</span><span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span> <span class="unknown token" data-binding="">=</span> <span class="typed token" data-binding="" data-verso-hover="11">3</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="unknown token" data-binding="">+</span><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="unknown token" data-binding="">=</span><span class="typed token" data-binding="" data-verso-hover="11">5</span> <span class="unknown token" data-binding="">:=</span> <span class="tactic"><label for="tactic-state-14554489911181215882-2624-2626"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-2624" data-verso-hover="5">by</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-14554489911181215882-2624-2626"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3794" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3821" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>5</span></span></span></span></span>
+  <span class="tactic"><label for="tactic-state-14554489911181215882-2629-2646"><span class="has-info warning"><span class="hover-container"><span class="hover-info messages"><code class="message info">Name: 'h2'  Type: 'b = 3' </code><code class="message info">Name: 'b'  Type: 'ℕ' </code><code class="message info">Name: 'h1'  Type: 'a = 2' </code><code class="message info">Name: 'a'  Type: 'ℕ' </code><code class="message warning">'print_hypotheses'' tactic does nothing
+note: this linter can be disabled with `set_option linter.unusedTactic false`</code></span></span><span class="keyword token" data-binding="kw-occ-tacticPrint_hypotheses'-2629">print_hypotheses'</span></span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-14554489911181215882-2629-2646"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3794" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3821" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>5</span></span></span></span></span> -- prints h1 and h2
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.tacticHave_-2669" data-verso-hover="73">have</span> <span class="var token" data-binding="var-_uniq.3968" data-verso-hover="74">h3</span> <span class="unknown token" data-binding="">:</span> <span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="unknown token" data-binding="">-</span><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span> <span class="unknown token" data-binding="">=</span> <span class="typed token" data-binding="" data-verso-hover="11">1</span> <span class="unknown token" data-binding="">:=</span> <span class="tactic"><label for="tactic-state-5616555856448467546-2690-2692"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-2690" data-verso-hover="5">by</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-5616555856448467546-2690-2692"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3794" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3821" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-HSub.hSub" data-verso-hover="75"> - </span><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>1</span></span></span></span></span> <span class="tactic"><label for="tactic-state-5616555856448467546-2693-2694"><span class="unknown token" data-binding="">{</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-5616555856448467546-2693-2694"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3794" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3821" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-HSub.hSub" data-verso-hover="75"> - </span><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>1</span></span></span></span></span><span class="tactic"><label for="tactic-state-7-2694-2705"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.rwSeq-2694" data-verso-hover="76">rw</span> <span class="unknown token" data-binding="">[</span><span class="var token" data-binding="var-_uniq.3794" data-verso-hover="70">h1</span><span class="unknown token" data-binding="">,</span> <span class="var token" data-binding="var-_uniq.3821" data-verso-hover="71">h2</span><span class="unknown token" data-binding="">]</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7-2694-2705"><span class="tactic-state">All goals completed! 🐙</span></span><span class="unknown token" data-binding="">}</span>
+  <span class="tactic"><label for="tactic-state-11981143889746336053-2709-2726"><span class="has-info warning"><span class="hover-container"><span class="hover-info messages"><code class="message warning">'print_hypotheses'' tactic does nothing
+note: this linter can be disabled with `set_option linter.unusedTactic false`</code><code class="message info">Name: 'h1'  Type: 'a = 2' </code><code class="message info">Name: 'h2'  Type: 'b = 3' </code><code class="message info">Name: 'h3'  Type: 'b - a = 1' </code><code class="message info">Name: 'a'  Type: 'ℕ' </code><code class="message info">Name: 'b'  Type: 'ℕ' </code></span></span><span class="keyword token" data-binding="kw-occ-tacticPrint_hypotheses'-2709">print_hypotheses'</span></span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-11981143889746336053-2709-2726"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span></span><span class="colon">:</span><span class="type"><span class="const token" data-binding="const-Nat" data-verso-hover="72">ℕ</span></span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3794" data-verso-hover="70">h1</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3821" data-verso-hover="71">h2</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>3</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.3968" data-verso-hover="74">h3</span></span><span class="colon">:</span><span class="type"><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-HSub.hSub" data-verso-hover="75"> - </span><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>1</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="var token" data-binding="var-_uniq.3761" data-verso-hover="11">a</span><span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span><span class="var token" data-binding="var-_uniq.3763" data-verso-hover="11">b</span><span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>5</span></span></span></span></span> -- prints h1 and h2 and h3
+  <span class="tactic"><label for="tactic-state-7-2756-2761"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Tactic.tacticSorry-2756" data-verso-hover="42">sorry</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-7-2756-2761"><span class="tactic-state">All goals completed! 🐙</span></span>
+<span class="unknown token" data-binding=""></span></code><p>
+            … it does update to include the newest hypothesis.</p>
+          </section>
+        <section>
+          <h2>
+            (Quickly) Reading Newly-Added Hypotheses</h2>
+          <p>
+            We can also fix the same issue by just adding <code>withMainContext</code> to the beginning of the tactic.</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.elab-3001">elab</span> <span class="literal string token" data-binding="" data-verso-hover="80">"print_hypotheses''"</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Parser.Category.tactic" data-verso-hover="2">tactic</span> <span class="unknown token" data-binding="">=&gt;</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.withMainContext" data-verso-hover="81">withMainContext</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-3055">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-3060" data-verso-hover="17">for</span> <span class="var token" data-binding="var-_uniq.4226" data-verso-hover="61">ldecl</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doForDecl-3064">in</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.MonadLCtx.getLCtx" data-verso-hover="62">getLCtx</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-3060" data-verso-hover="17">do</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-3092">if</span> <span class="var token" data-binding="var-_uniq.4226" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.isImplementationDetail" data-verso-hover="63">isImplementationDetail</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-3092">then</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doContinue-3129" data-verso-hover="64">continue</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-3142">let</span> <span class="var token" data-binding="var-_uniq.4510" data-verso-hover="65">hyp_name</span> <span class="unknown token" data-binding="">:=</span> <span class="var token" data-binding="var-_uniq.4226" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.userName" data-verso-hover="66">userName</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-3177">let</span> <span class="var token" data-binding="var-_uniq.4514" data-verso-hover="67">hyp_type</span> <span class="unknown token" data-binding="">:=</span> <span class="var token" data-binding="var-_uniq.4226" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.type" data-verso-hover="68">type</span>
+    <span class="const token" data-binding="const-Lean.logInfo" data-verso-hover="10">logInfo</span> <span class="keyword token" data-binding="kw-occ-Lean.termM!_-3216">m!</span><span class="unknown token" data-binding="">"Name: '{</span><span class="var token" data-binding="var-_uniq.4510" data-verso-hover="65">hyp_name</span><span class="unknown token" data-binding="">}'  Type: '{</span><span class="var token" data-binding="var-_uniq.4514" data-verso-hover="67">hyp_type</span><span class="unknown token" data-binding="">}' "</span>
+<span class="unknown token" data-binding=""></span></code><p>
+            Why does this work?</p>
+          <p>
+            If you run a tactic, Lean works with the initial context of the theorem.</p>
+          <p>
+            If you run <code>withMainContext</code>, then Lean gets the first goal (that is, the main metavariable), and adds in all of its context, and works with that.</p>
+          <p>
+            We did that manually earlier by calling <code>goal ← getMainGoal</code> and then  <code>(← goal.getDecl).lctx</code>.  But <code>withMainContext</code> adds in all the right stuff for us.</p>
+          </section>
+        <section>
+          <h2>
+            Extracting Code into a Separate Definition</h2>
+          <p>
+            At this point, the tactics have gotten longer, and before we start adding onto this tactic in the next section, we might want to move out parts of the tactic into bits we can reuse in other tactics.</p>
+          <p>
+            We can do this as long as we move out the side-effect-causing tasks into a function wrapped into a monad, either <code>MetaM</code> or <code>TacticM</code>. (We’ll get into the differences between them later).</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.definition-4147">def</span> <span class="const token" data-binding="const-printHypotheses" data-verso-hover="82">printHypotheses</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.TacticM" data-verso-hover="83">TacticM</span> <span class="const token" data-binding="const-Unit" data-verso-hover="84">Unit</span> <span class="unknown token" data-binding="">:=</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-4185">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLetArrow-4190">let</span> <span class="var token" data-binding="var-_uniq.5651" data-verso-hover="8">goal</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.getMainGoal" data-verso-hover="9">getMainGoal</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-4217" data-verso-hover="17">for</span> <span class="var token" data-binding="var-_uniq.5823" data-verso-hover="61">ldecl</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doForDecl-4221">in</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.MonadLCtx.getLCtx" data-verso-hover="62">getLCtx</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-4217" data-verso-hover="17">do</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-4249">if</span> <span class="var token" data-binding="var-_uniq.5823" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.isImplementationDetail" data-verso-hover="63">isImplementationDetail</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-4249">then</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doContinue-4286" data-verso-hover="64">continue</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-4299">let</span> <span class="var token" data-binding="var-_uniq.6107" data-verso-hover="65">hypName</span> <span class="unknown token" data-binding="">:=</span> <span class="var token" data-binding="var-_uniq.5823" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.userName" data-verso-hover="66">userName</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-4333">let</span> <span class="var token" data-binding="var-_uniq.6111" data-verso-hover="67">hypType</span> <span class="unknown token" data-binding="">:=</span> <span class="var token" data-binding="var-_uniq.5823" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.type" data-verso-hover="68">type</span>
+    <span class="const token" data-binding="const-Lean.logInfo" data-verso-hover="10">logInfo</span> <span class="keyword token" data-binding="kw-occ-Lean.termM!_-4371">m!</span><span class="unknown token" data-binding="">"Name: '{</span><span class="var token" data-binding="var-_uniq.6107" data-verso-hover="65">hypName</span><span class="unknown token" data-binding="">}'  Type: '{</span><span class="var token" data-binding="var-_uniq.6111" data-verso-hover="67">hypType</span><span class="unknown token" data-binding="">}'"</span>
+<span class="unknown token" data-binding=""></span></code><p>
+            We can still call <code>print_hypotheses</code> as normal as long as we also create an <code>elab</code> that tells Lean which function to call when the user types <code>print_hypotheses</code>.</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.elab-4619">elab</span> <span class="literal string token" data-binding="" data-verso-hover="56">"print_hypotheses"</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Parser.Category.tactic" data-verso-hover="2">tactic</span> <span class="unknown token" data-binding="">=&gt;</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-4655">do</span>
+  <span class="const token" data-binding="const-printHypotheses" data-verso-hover="82">printHypotheses</span>
+<span class="unknown token" data-binding=""></span></code></section>
+        <section>
+          <h2>
+            Returning Values</h2>
+          <p>
+            The function we used above looked like</p>
+          <pre>def printHypotheses : TacticM Unit := do
+	...
+</pre><p>
+            In general, if we ever write a tactic that doesn’t return anything (and perhaps, just prints something to the screen), it will have the <code>Unit</code> return type.</p>
+          <p>
+            The <code>Unit</code> serves the purpose that <code>void</code> does in other programming languages — it tells us the function isn’t going to return anything interesting.</p>
+          </section>
+        <section>
+          <h2>
+            Getting a Particular Hypothesis</h2>
+          <p>
+            What if we want to print a particular hypothesis?</p>
+          <p>
+            Then we need return values.  So far we've just printing to the screen, and been returning <code>Unit</code>. What if we actually want to return values, so that you can use them in another method? We can do that by wrapping the return value (in this case, a <code>LocalDecl</code>) in a monad (in this case, <code>TacticM</code>).</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.definition-5534">def</span> <span class="const token" data-binding="const-getHypothesisByName" data-verso-hover="85">getHypothesisByName</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.7286" data-verso-hover="65">h</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Name" data-verso-hover="86">Name</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.TacticM" data-verso-hover="83">TacticM</span> <span class="const token" data-binding="const-Lean.LocalDecl" data-verso-hover="87">LocalDecl</span> <span class="unknown token" data-binding="">:=</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.withMainContext" data-verso-hover="81">withMainContext</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-5608">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLetArrow-5613">let</span> <span class="var token" data-binding="var-_uniq.7354" data-verso-hover="8">goal</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.getMainGoal" data-verso-hover="9">getMainGoal</span>  -- the dynamically generated hypotheses are associated with this particular goal
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-5722" data-verso-hover="17">for</span> <span class="var token" data-binding="var-_uniq.7645" data-verso-hover="61">ldecl</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doForDecl-5726">in</span> <span class="unknown token" data-binding="">(</span><span class="unknown token" data-binding="">←</span> <span class="var token" data-binding="var-_uniq.7354" data-verso-hover="8">goal</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.MVarId.getDecl" data-verso-hover="78">getDecl</span><span class="unknown token" data-binding="">)</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.MetavarDecl.lctx" data-verso-hover="79">lctx</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-5722" data-verso-hover="17">do</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-5766">if</span> <span class="var token" data-binding="var-_uniq.7645" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.isImplementationDetail" data-verso-hover="63">isImplementationDetail</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-5766">then</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doContinue-5803" data-verso-hover="64">continue</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-5816">if</span> <span class="var token" data-binding="var-_uniq.7645" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.userName" data-verso-hover="66">userName</span> <span class="unknown token" data-binding="">==</span> <span class="var token" data-binding="var-_uniq.7286" data-verso-hover="65">h</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-5816">then</span>
+      <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doReturn-5850" data-verso-hover="3">return</span> <span class="var token" data-binding="var-_uniq.7645" data-verso-hover="61">ldecl</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.termThrowError__-5865" data-verso-hover="88">throwError</span> <span class="keyword token" data-binding="kw-occ-Lean.termM!_-5876">m!</span><span class="unknown token" data-binding="">"No hypothesis by the name {</span><span class="var token" data-binding="var-_uniq.7286" data-verso-hover="65">h</span><span class="unknown token" data-binding="">}."</span>
+<span class="unknown token" data-binding=""></span></code><p>
+            The above works for if you want to call this method within a metaprogram.</p>
+          <p>
+            But if you want a similar function to call within a theorem, you can only pass in "terms" not names directly.  Here we do some pre-processing on the term to get a name.</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.definition-6202">def</span> <span class="const token" data-binding="const-getHypothesisByFVarId" data-verso-hover="89">getHypothesisByFVarId</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.8890" data-verso-hover="90">h</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.FVarId" data-verso-hover="91">FVarId</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.TacticM" data-verso-hover="83">TacticM</span> <span class="const token" data-binding="const-Lean.LocalDecl" data-verso-hover="87">LocalDecl</span> <span class="unknown token" data-binding="">:=</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.withMainContext" data-verso-hover="81">withMainContext</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-6280">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLetArrow-6285">let</span> <span class="var token" data-binding="var-_uniq.8958" data-verso-hover="8">goal</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.getMainGoal" data-verso-hover="9">getMainGoal</span>  -- the dynamically generated hypotheses are associated with this particular goal
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-6394" data-verso-hover="17">for</span> <span class="var token" data-binding="var-_uniq.9249" data-verso-hover="61">ldecl</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doForDecl-6398">in</span> <span class="unknown token" data-binding="">(</span><span class="unknown token" data-binding="">←</span> <span class="var token" data-binding="var-_uniq.8958" data-verso-hover="8">goal</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.MVarId.getDecl" data-verso-hover="78">getDecl</span><span class="unknown token" data-binding="">)</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.MetavarDecl.lctx" data-verso-hover="79">lctx</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-6394" data-verso-hover="17">do</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-6438">if</span> <span class="var token" data-binding="var-_uniq.9249" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.isImplementationDetail" data-verso-hover="63">isImplementationDetail</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-6438">then</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doContinue-6475" data-verso-hover="64">continue</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-6488">if</span> <span class="var token" data-binding="var-_uniq.9249" data-verso-hover="61">ldecl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.fvarId" data-verso-hover="92">fvarId</span> <span class="unknown token" data-binding="">==</span> <span class="var token" data-binding="var-_uniq.8890" data-verso-hover="90">h</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-6488">then</span>
+      <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doReturn-6520" data-verso-hover="3">return</span> <span class="var token" data-binding="var-_uniq.9249" data-verso-hover="61">ldecl</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.termThrowError__-6535" data-verso-hover="88">throwError</span> <span class="keyword token" data-binding="kw-occ-Lean.termM!_-6546">m!</span><span class="unknown token" data-binding="">"No hypothesis with fvarId {</span><span class="var token" data-binding="var-_uniq.8890" data-verso-hover="90">h</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.FVarId.name" data-verso-hover="93">name</span><span class="unknown token" data-binding="">}."</span>
+
+<span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.definition-6587">def</span> <span class="const token" data-binding="const-getHypothesisByTerm" data-verso-hover="94">getHypothesisByTerm</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.10540" data-verso-hover="95">h</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.TSyntax" data-verso-hover="96">TSyntax</span> <span class="unknown token" data-binding="">`term</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">:</span>  <span class="const token" data-binding="const-Lean.Elab.Tactic.TacticM" data-verso-hover="83">TacticM</span> <span class="const token" data-binding="const-Lean.LocalDecl" data-verso-hover="87">LocalDecl</span> <span class="unknown token" data-binding="">:=</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.withMainContext" data-verso-hover="81">withMainContext</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-6671">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLetArrow-6676">let</span> <span class="var token" data-binding="var-_uniq.10705" data-verso-hover="90">fvarId</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.getFVarId" data-verso-hover="97">getFVarId</span> <span class="var token" data-binding="var-_uniq.10540" data-verso-hover="95">h</span>
+  <span class="const token" data-binding="const-getHypothesisByFVarId" data-verso-hover="89">getHypothesisByFVarId</span> <span class="var token" data-binding="var-_uniq.10705" data-verso-hover="90">fvarId</span>
+
+<span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.elab-6735">elab</span> <span class="literal string token" data-binding="" data-verso-hover="98">"print_hypothesis_by_name"</span> <span class="var token" data-binding="var-_uniq.10813" data-verso-hover="95">h</span><span class="unknown token" data-binding="">:</span><span class="const token" data-binding="const-Lean.Parser.Category.term" data-verso-hover="99">term</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Parser.Category.tactic" data-verso-hover="2">tactic</span> <span class="unknown token" data-binding="">=&gt;</span>  <span class="const token" data-binding="const-Lean.Elab.Tactic.withMainContext" data-verso-hover="81">withMainContext</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-6803">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLetArrow-6808">let</span> <span class="var token" data-binding="var-_uniq.10883" data-verso-hover="61">decl</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-getHypothesisByTerm" data-verso-hover="94">getHypothesisByTerm</span> <span class="var token" data-binding="var-_uniq.10813" data-verso-hover="95">h</span>
+  <span class="const token" data-binding="const-Lean.logInfo" data-verso-hover="10">logInfo</span> <span class="var token" data-binding="var-_uniq.10883" data-verso-hover="61">decl</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.LocalDecl.type" data-verso-hover="68">type</span>
+<span class="unknown token" data-binding=""></span></code><p>
+            Now we can see this at work in a theorem:</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.example-6963">example</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.11950" data-verso-hover="100">h1</span> <span class="unknown token" data-binding="">:</span> <span class="typed token" data-binding="" data-verso-hover="11">1</span><span class="unknown token" data-binding="">+</span><span class="typed token" data-binding="" data-verso-hover="11">1</span><span class="unknown token" data-binding="">=</span><span class="typed token" data-binding="" data-verso-hover="11">2</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.12071" data-verso-hover="101">h2</span><span class="unknown token" data-binding="">:</span> <span class="typed token" data-binding="" data-verso-hover="11">2</span><span class="unknown token" data-binding="">+</span><span class="typed token" data-binding="" data-verso-hover="11">2</span><span class="unknown token" data-binding="">=</span><span class="typed token" data-binding="" data-verso-hover="11">4</span><span class="unknown token" data-binding="">)</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-True" data-verso-hover="4">True</span> <span class="unknown token" data-binding="">:=</span> <span class="tactic"><label for="tactic-state-13971471754545368869-7006-7008"><span class="has-info error"><span class="hover-container"><span class="hover-info messages"><code class="message error">unsolved goals
+h1 : 1 + 1 = 2
+h2 : 2 + 2 = 4
+⊢ True</code></span></span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.byTactic-7006" data-verso-hover="5">by</span></span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-13971471754545368869-7006-7008"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.11950" data-verso-hover="100">h1</span></span><span class="colon">:</span><span class="type">1<span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span>1<span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.12071" data-verso-hover="101">h2</span></span><span class="colon">:</span><span class="type">2<span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span>2<span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>4</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="const token" data-binding="const-True" data-verso-hover="4">True</span></span></span></span></span></span>
+  <span class="tactic"><label for="tactic-state-13971471754545368869-7011-7038"><span class="has-info info"><span class="hover-container"><span class="hover-info messages"><code class="message info">1 + 1 = 2</code></span></span><span class="keyword token" data-binding="kw-occ-tacticPrint_hypothesis_by_name_-7011">print_hypothesis_by_name</span></span> <span class="var token" data-binding="var-_uniq.11950" data-verso-hover="100">h1</span></label><input type="checkbox" class="tactic-toggle" id="tactic-state-13971471754545368869-7011-7038"><span class="tactic-state"><span class="goal"><span class="hypotheses"><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.11950" data-verso-hover="100">h1</span></span><span class="colon">:</span><span class="type">1<span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span>1<span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>2</span></span><span class="hypothesis"><span class="name"><span class="var token" data-binding="var-_uniq.12071" data-verso-hover="101">h2</span></span><span class="colon">:</span><span class="type">2<span class="const token" data-binding="const-HAdd.hAdd" data-verso-hover="12"> + </span>2<span class="const token" data-binding="const-Eq" data-verso-hover="13"> = </span>4</span></span></span><span class="conclusion"><span class="prefix">⊢ </span><span class="type"><span class="const token" data-binding="const-True" data-verso-hover="4">True</span></span></span></span></span></span>
+<span class="unknown token" data-binding=""></span></code></section>
+        <section>
+          <h2>
+            Writing Tactics with MetaM vs TacticM</h2>
+          <p>
+            Our <code>printHypotheses</code> function worked when we had it return a <code>TacticM</code>.</p>
+          <p>
+            But if we change it to use <code>MetaM</code>, it fails.</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.definition-7258">def</span> <span class="const token" data-binding="const-printHypotheses'" data-verso-hover="102">printHypotheses'</span> <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Meta.MetaM" data-verso-hover="103">MetaM</span> <span class="const token" data-binding="const-Unit" data-verso-hover="84">Unit</span> <span class="unknown token" data-binding="">:=</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-7295">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLetArrow-7300">let</span> <span class="var token" data-binding="var-_uniq.13290" data-verso-hover="104">goal</span> <span class="unknown token" data-binding="">←</span> <span class="has-info error"><span class="hover-container"><span class="hover-info messages"><code class="message error">type mismatch
+  getMainGoal
+has type
+  TacticM MVarId : Type
+but is expected to have type
+  MetaM ?m.11858 : Type</code></span></span><span class="const token" data-binding="const-Lean.Elab.Tactic.getMainGoal" data-verso-hover="9">getMainGoal</span></span>
+  <span class="has-info error"><span class="hover-container"><span class="hover-info messages"><code class="message error">failed to construct 'ForIn' instance for collection
+  ?m.13456
+and monad
+  ReaderT Meta.Context (StateRefT' IO.RealWorld Meta.State CoreM)</code></span></span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-7327" data-verso-hover="17">for</span></span> <span class="unknown token" data-binding="">ldecl</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doForDecl-7331">in</span> <span class="has-info error"><span class="hover-container"><span class="hover-info messages"><code class="message error">invalid field notation, type is not of the form (C ...) where C is a constant
+  __do_lift✝
+has type
+  ?m.13434 goal</code></span></span><span class="unknown token" data-binding="">(</span></span><span class="unknown token" data-binding="">←</span> <span class="has-info error"><span class="hover-container"><span class="hover-info messages"><code class="message error">invalid field notation, type is not of the form (C ...) where C is a constant
+  goal
+has type
+  ?m.11847</code></span></span><span class="var token" data-binding="var-_uniq.13290" data-verso-hover="104">goal</span></span><span class="unknown token" data-binding="">.</span><span class="unknown token" data-binding="">getDecl</span><span class="unknown token" data-binding="">)</span><span class="unknown token" data-binding="">.</span><span class="unknown token" data-binding="">lctx</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doFor-7327" data-verso-hover="17">do</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-7371">if</span> <span class="unknown token" data-binding="">ldecl.isImplementationDetail</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doIf-7371">then</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doContinue-7408" data-verso-hover="64">continue</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-7421">let</span> <span class="unknown token" data-binding="">hypName</span> <span class="unknown token" data-binding="">:=</span> <span class="unknown token" data-binding="">ldecl.userName</span>
+    <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLet-7455">let</span> <span class="unknown token" data-binding="">hypType</span> <span class="unknown token" data-binding="">:=</span> <span class="unknown token" data-binding="">ldecl.type</span>
+    <span class="unknown token" data-binding="">logInfo</span> <span class="keyword token" data-binding="kw-occ-Lean.termM!_-7493">m!</span><span class="unknown token" data-binding="">"Name: '{</span><span class="unknown token" data-binding="">hypName</span><span class="unknown token" data-binding="">}'  Type: '{</span><span class="unknown token" data-binding="">hypType</span><span class="unknown token" data-binding="">}'"</span>
+<span class="unknown token" data-binding=""></span></code><p>
+            That’s because working within <code>TacticM</code> gives us access to the current goals — if we try to access the goals outside <code>TacticM</code>, we get an error.</p>
+          <p>
+            In fact, <code>TacticM</code> has access to everything <code>MetaM</code> has access too, plus goals.</p>
+          </section>
+        <section>
+          <h2>
+            Why ever use MetaM?</h2>
+          <p>
+            So if <code>TacticM</code> is just <code>MetaM</code> but more, why would we ever use <code>MetaM</code>?</p>
+          <p>
+            The following code works if you use <code>MetaM</code>…</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="doc-comment token" data-binding="">/-- Check the context for a theorem named `riemannHypothesis`. -/</span>
+<span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.definition-8019">def</span> <span class="const token" data-binding="const-lookIntoEnvironment" data-verso-hover="105">lookIntoEnvironment</span>  <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Meta.MetaM" data-verso-hover="103">MetaM</span> <span class="const token" data-binding="const-Unit" data-verso-hover="84">Unit</span> <span class="unknown token" data-binding="">:=</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-8060">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLetArrow-8065">let</span> <span class="var token" data-binding="var-_uniq.11870" data-verso-hover="106">env</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.MonadEnv.getEnv" data-verso-hover="107">getEnv</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doDbgTrace-8086" data-verso-hover="108">dbg_trace</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.11870" data-verso-hover="106">env</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.Environment.contains" data-verso-hover="109">contains</span> <span class="unknown token" data-binding="">`riemannHypothesis</span><span class="unknown token" data-binding="">)</span>
+
+<span class="has-info info"><span class="hover-container"><span class="hover-info messages"><code class="message info">false
+</code></span></span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.eval-8131" data-verso-hover="110">#eval</span></span> <span class="const token" data-binding="const-lookIntoEnvironment" data-verso-hover="105">lookIntoEnvironment</span>
+<span class="unknown token" data-binding=""></span></code><p>
+            … but fails if you use <code>TacticM</code>.</p>
+          <code class="hl lean block" data-lean-context="readingAndChangingTheHypotheses"><span class="doc-comment token" data-binding="">/-- Check the context for a theorem named `riemannHypothesis`. -/</span>
+<span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.definition-8317">def</span> <span class="const token" data-binding="const-lookIntoEnvironment'" data-verso-hover="111">lookIntoEnvironment'</span>  <span class="unknown token" data-binding="">:</span> <span class="const token" data-binding="const-Lean.Elab.Tactic.TacticM" data-verso-hover="83">TacticM</span> <span class="const token" data-binding="const-Unit" data-verso-hover="84">Unit</span> <span class="unknown token" data-binding="">:=</span> <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.do-8361">do</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doLetArrow-8366">let</span> <span class="var token" data-binding="var-_uniq.12294" data-verso-hover="106">env</span> <span class="unknown token" data-binding="">←</span> <span class="const token" data-binding="const-Lean.MonadEnv.getEnv" data-verso-hover="107">getEnv</span>
+  <span class="keyword token" data-binding="kw-occ-Lean.Parser.Term.doDbgTrace-8387" data-verso-hover="108">dbg_trace</span> <span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.12294" data-verso-hover="106">env</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-Lean.Environment.contains" data-verso-hover="109">contains</span> <span class="unknown token" data-binding="">`riemannHypothesis</span><span class="unknown token" data-binding="">)</span>
+
+<span class="has-info error"><span class="hover-container"><span class="hover-info messages"><code class="message error">unable to synthesize 'MonadEval' instance to adapt
+  TacticM Unit
+to 'IO' or 'Command.CommandElabM'.</code></span></span><span class="keyword token" data-binding="kw-occ-Lean.Parser.Command.eval-8432" data-verso-hover="110">#eval</span></span> <span class="const token" data-binding="const-lookIntoEnvironment'" data-verso-hover="111">lookIntoEnvironment'</span>
+<span class="unknown token" data-binding=""></span></code><p>
+            What’s going on?</p>
+          <p>
+            If we ever want to check how our functions work using <code>#eval</code> statements, they need to implement the <code>MetaEval</code> class — which allows output to be easily evaluated.  <code>MetaM</code> implements this class,  but <code>TacticM</code> doesn’t.</p>
+          <p>
+            So, we ideally want to return something of type <code>TacticM</code> only when we really need it.</p>
+          <p>
+            In summary, here are the perks of each:</p>
+          <ul>
+            <li>
+              <p>
+                <code>MetaM</code> lets you access most of the local context (including declared <em>meta</em>variables, therefore the name <code>MetaM</code>).</p>
+              </li>
+            <li>
+              <p>
+                <code>TacticM</code> lets you access anything in <code>MetaM</code>, and also the current goals you have in the theorem the <em>tactic</em> is being used in (therefore the name <code>TacticM</code>)..</p>
+              </li>
+            </ul>
+          <p>
+            And here are the downsides:</p>
+          <ul>
+            <li>
+              <p>
+                We can’t use a <code>MetaM</code> function to peer into a goal — <code>MetaM</code> doesn’t allow us access to a list of goals.</p>
+              </li>
+            <li>
+              <p>
+                We can’t call a <code>TacticM</code> function from <code>#eval</code>.
+</p>
+              </li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </body>
+  </html>
+
